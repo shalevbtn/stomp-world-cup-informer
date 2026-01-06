@@ -8,7 +8,7 @@ A community-led World Cup update service allowing users to subscribe to game cha
 * **Protocol:** Full implementation of **STOMP 1.2** (Simple-Text-Oriented-Messaging-Protocol) for asynchronous message passing.
 * **Database:** Integration with **SQLite** for persistent storage of user credentials, login history, and file tracking.
 
-## 🛠 Skills & Concepts Implemented
+## Skills & Concepts Implemented
 * **Network Programming:** TCP/IP socket communication and custom protocol implementation.
 * **Concurrency & Multithreading:** Managing multiple client connections (Java) and simultaneous I/O threads (C++).
 * **Software Design Patterns:** Utilization of the Reactor and Template patterns for scalable server design.
@@ -25,4 +25,5 @@ A community-led World Cup update service allowing users to subscribe to game cha
 ### Client (C++)
 1. **Compile:** `make`
 2. **Run:** `./bin/StompWCIClient <host_ip> <port>`
+
 
