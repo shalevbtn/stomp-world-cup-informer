@@ -14,16 +14,3 @@ A community-led World Cup update service allowing users to subscribe to game cha
 * **Software Design Patterns:** Utilization of the Reactor and Template patterns for scalable server design.
 * **Database Management:** Relational data modeling and SQL query execution.
 * **Systems Programming:** Cross-language development using Maven (Java) and Makefiles (C++).
-
-## Execution Instructions
-
-### Server (Java)
-1. **Compile:** `mvn compile`
-2. **Run TPC:** `mvn exec:java -Dexec.mainClass="bgu.spl.net.impl.stomp.StompServer" -Dexec.args="<port> tpc"`
-3. **Run Reactor:** `mvn exec:java -Dexec.mainClass="bgu.spl.net.impl.stomp.StompServer" -Dexec.args="<port> reactor"`
-
-### Client (C++)
-1. **Compile:** `make`
-2. **Run:** `./bin/StompWCIClient <host_ip> <port>`
-
-
