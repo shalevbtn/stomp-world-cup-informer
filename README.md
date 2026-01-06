@@ -1,11 +1,27 @@
 # World Cup 2026 Informer - STOMP Implementation
 
-[cite_start]This project is a "community-led" world cup update subscription service implemented using the **STOMP** (Simple-Text-Oriented-Messaging-Protocol) standard[cite: 7, 12]. [cite_start]It consists of a Java-based server and a C++ client, allowing users to subscribe to game channels and receive real-time updates from other users[cite: 8, 9, 10, 11].
+A community-led World Cup update service allowing users to subscribe to game channels and share real-time reports. The system utilizes a Java-based server and a multi-threaded C++ client communicating via the STOMP 1.2 protocol.
 
-## Project Structure
+## 🏗 Project Architecture
+* **Java Server:** Implements both **Thread-Per-Client (TPC)** and **Reactor** concurrency models.
+* **C++ Client:** A multi-threaded application that handles simultaneous terminal input and network socket communication.
+* **Protocol:** Full implementation of **STOMP 1.2** (Simple-Text-Oriented-Messaging-Protocol) for asynchronous message passing.
+* **Database:** Integration with **SQLite** for persistent storage of user credentials, login history, and file tracking.
 
-* **Server (Java):** A STOMP server that supports both **Thread-Per-Client (TPC)** and **Reactor** architectures[cite: 10]. [cite_start]It manages subscriptions, distributes messages to topics, and handles user authentication[cite: 46, 48, 62].
-* **Client (C++):** A multi-threaded client designed to handle simultaneous keyboard input and server socket communication[cite: 11, 290, 291].
-* **Protocol:** Implements **STOMP 1.2**, supporting frames such as `CONNECT`, `SUBSCRIBE`, `SEND`, `UNSUBSCRIBE`, and `DISCONNECT`[cite: 22, 74].
-* **Database:** Integrates with an **SQLite** database via a Python bridge for persistent tracking of users, logins, and report files[cite: 261, 262, 271].
+## 🛠 Skills & Concepts Implemented
+* **Network Programming:** TCP/IP socket communication and custom protocol implementation.
+* **Concurrency & Multithreading:** Managing multiple client connections (Java) and simultaneous I/O threads (C++).
+* **Software Design Patterns:** Utilization of the Reactor and Template patterns for scalable server design.
+* **Database Management:** Relational data modeling and SQL query execution.
+* **Systems Programming:** Cross-language development using Maven (Java) and Makefiles (C++).
 
+## 🚀 Execution Instructions
+
+### Server (Java)
+1. **Compile:** `mvn compile`
+2. **Run TPC:** `mvn exec:java -Dexec.mainClass="bgu.spl.net.impl.stomp.StompServer" -Dexec.args="<port> tpc"`
+3. **Run Reactor:** `mvn exec:java -Dexec.mainClass="bgu.spl.net.impl.stomp.StompServer" -Dexec.args="<port> reactor"`
+
+### Client (C++)
+1. **Compile:** `make`
+2. **Run:** `./bin/StompWCIClient <host_ip> <port>`
