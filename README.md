@@ -2,7 +2,7 @@
 
 A community-led World Cup update service allowing users to subscribe to game channels and share real-time reports. The system utilizes a Java-based server and a multi-threaded C++ client communicating via the STOMP 1.2 protocol.
 
-## 🏗 Project Architecture
+## Project Architecture
 * **Java Server:** Implements both **Thread-Per-Client (TPC)** and **Reactor** concurrency models.
 * **C++ Client:** A multi-threaded application that handles simultaneous terminal input and network socket communication.
 * **Protocol:** Full implementation of **STOMP 1.2** (Simple-Text-Oriented-Messaging-Protocol) for asynchronous message passing.
@@ -15,7 +15,7 @@ A community-led World Cup update service allowing users to subscribe to game cha
 * **Database Management:** Relational data modeling and SQL query execution.
 * **Systems Programming:** Cross-language development using Maven (Java) and Makefiles (C++).
 
-## 🚀 Execution Instructions
+## Execution Instructions
 
 ### Server (Java)
 1. **Compile:** `mvn compile`
@@ -25,3 +25,4 @@ A community-led World Cup update service allowing users to subscribe to game cha
 ### Client (C++)
 1. **Compile:** `make`
 2. **Run:** `./bin/StompWCIClient <host_ip> <port>`
+
