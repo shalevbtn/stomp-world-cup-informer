@@ -1,7 +1,8 @@
 package bgu.spl.net.srv;
 
 import bgu.spl.net.api.MessageEncoderDecoder;
-import bgu.spl.net.api.MessagingProtocol;
+import bgu.spl.net.api.StompMessagingProtocol;
+
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -10,13 +11,18 @@ import java.util.function.Supplier;
 public abstract class BaseServer<T> implements Server<T> {
 
     private final int port;
-    private final Supplier<MessagingProtocol<T>> protocolFactory;
+    private final Supplier<StompMessagingProtocol<T>> protocolFactory;
     private final Supplier<MessageEncoderDecoder<T>> encdecFactory;
     private ServerSocket sock;
 
+    //Refactor additions:
+    private int idCounter = 0;
+    private final ConnectionsImpl<T> cons = new ConnectionsImpl<>();
+
+    
     public BaseServer(
             int port,
-            Supplier<MessagingProtocol<T>> protocolFactory,
+            Supplier<StompMessagingProtocol<T>> protocolFactory,
             Supplier<MessageEncoderDecoder<T>> encdecFactory) {
 
         this.port = port;
@@ -27,7 +33,7 @@ public abstract class BaseServer<T> implements Server<T> {
 
     @Override
     public void serve() {
-
+        idCounter++;
         try (ServerSocket serverSock = new ServerSocket(port)) {
 			System.out.println("Server started");
 
@@ -41,7 +47,8 @@ public abstract class BaseServer<T> implements Server<T> {
                         clientSock,
                         encdecFactory.get(),
                         protocolFactory.get());
-
+                handler.getProtocol().start(++idCounter, cons);
+                cons.connect(idCounter,handler);
                 execute(handler);
             }
         } catch (IOException ex) {
