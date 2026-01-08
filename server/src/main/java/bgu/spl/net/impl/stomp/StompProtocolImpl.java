@@ -1,5 +1,6 @@
 package bgu.spl.net.impl.stomp;
 
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
@@ -16,6 +17,8 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
     private boolean shouldTerminate = false;
     private boolean isLoggedIn = false;
 
+    List<String>
+
     @Override
     public void start(int connectionId, Connections<String> connections) {
         conId = connectionId;
@@ -26,7 +29,7 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
     public void process(String message) {
         String[] lines = message.split("\n");
         String command = lines[0];
-        List<String> params = new LinkedList<>();
+        List<String> params = new ArrayList<>();
         String context = "";
         
         boolean isParams = true;
@@ -43,23 +46,23 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
 
         switch (command) {
             case "CONNECT":
-                
+                handleConnect(params);
                 break;
 
             case "SEND":
-                
+                handleSend(params, context);
                 break;
 
             case "SUBSCRIBE":
-                
+                handleSubscribe(params, context);
                 break;
+
             case "UNSUBSCRIBE":
-                
+                handleUnSubscribe(params, context);
                 break;
 
             case "DISCONNECT":
-                con.
-                shouldTerminate = true;
+                handleDisconnect(params, context);
                 break;
 
             default:
@@ -70,6 +73,33 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
     @Override
     public boolean shouldTerminate() {
         return shouldTerminate;
+    }
+
+    private void handleConnect(List<String> params){
+        StringBuilder sb = new StringBuilder();
+
+        String host = params.get(1);
+        String login = params.get(2);
+        String pass = params.get(3);
+
+        sb.append("Connected").append("/n");
+        sb.append(params.get(0).substring(7)).append("/n");
+    }
+
+    private void handleSend(List<String> params, String context){
+        
+    }
+
+    private void handleSubscribe(List<String> params, String context){
+        
+    }
+
+    private void handleUnSubscribe(List<String> params, String context){
+        
+    }
+
+    private void handleDisconnect(List<String> params, String context){
+        shouldTerminate = true;
     }
 
 }
