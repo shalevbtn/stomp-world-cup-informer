@@ -1,44 +1,36 @@
 package bgu.spl.net.impl.stomp;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class StompMessage {
-    String command;
-    HashMap<String,String> parameters;
-    String context;
+    public String command;
+    public Map<String, String> headers = new HashMap<>();
+    public String body = "";
 
-
-    public StompMessage(String msg) {
-        String[] lines = msg.split("\n");
-        command = lines[0];
-        context = "";
-        parseMessage(lines);
+    public StompMessage(String rawMessage) {
+        parse(rawMessage);
     }
 
-    public String getParameter(String key) {
-        try {
-            return parameters.get(key);
-        } catch (Exception ex) {
-            System.out.print("Invalid Parameters of this command.");
-            return null;
+    private void parse(String msg) {
+        String[] parts = msg.split("\n\n", 2);
+
+        String[] lines = parts[0].split("\n");
+        this.command = lines[0].trim();
+        
+        for (int i = 1; i < lines.length; i++) {
+            String[] pair = lines[i].split(":", 2);
+            if (pair.length == 2) {
+                headers.put(pair[0], pair[1]);
+            }
+        }
+
+        if (parts.length > 1) {
+            this.body = parts[1];
         }
     }
 
-
-    private void parseMessage(String[] lines) {
-        boolean isParams = true;
-        //TO CHECK
-        for (String line : lines) {
-            if(line == "\n") {
-                isParams = false;
-            }
-            else if(isParams){
-                String[] lineSplit = line.split(":");
-                parameters.put(lineSplit[0], lineSplit[1]);
-            }
-            else {
-                context += line + "\n";
-            }
-        }
+    public String getHeader(String key) {
+        return headers.get(key);
     }
 }

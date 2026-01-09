@@ -74,4 +74,7 @@ public class ConnectionsImpl <T> implements Connections <T> {
             userChans.remove(channel);
         }
     }
+
+    // TODO: NEED TO VERIFY: if a client is not subscribed to a topic it is not allowed to send messages to it, and the server should send back an ERROR frame
+    public Boolean isClientSubed() {return false;}
 }
