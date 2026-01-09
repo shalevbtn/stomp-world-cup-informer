@@ -6,7 +6,7 @@ import bgu.spl.net.srv.ConnectionsImpl;
 
 public class StompProtocolImpl implements StompMessagingProtocol<String> {
 
-
+    private int receiptCounter;
     private int conId;
     private ConnectionsImpl con;
     private boolean shouldTerminate = false;
@@ -16,6 +16,7 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
     public void start(int connectionId, Connections<String> connections) {
         conId = connectionId;
         con = (ConnectionsImpl)connections;
+        receiptCounter = 0;
     }
 
     @Override
@@ -55,18 +56,19 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
 
     private void handleConnect(StompMessage msg){
         StringBuilder sb = new StringBuilder();
+        String host = msg.getParameter("host");
+        String login = msg.getParameter("login");
+        String pass = msg.getParameter("passcode");
 
         try {
-            String host = msg.getParameter("host");
-            String login = msg.getParameter("login");
-            String pass = msg.getParameter("passcode");
-
             //Now validate the user & pass with the DB and connected.
 
             sb.append("Connected").append("/n");
             sb.append("version:").append(msg.getParameter("accept-version")).append("/n");
         } catch(Exception ex) {
             // Wrong parameters probablly
+            sb = buildError();
+            sb.append("There was an error in connecting").append("/n");
         }
         finally {
             sb.append("\n");
@@ -74,7 +76,7 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
     }
 
     private void handleSend(StompMessage msg){
-        
+
     }
 
     private void handleSubscribe(StompMessage msg){
@@ -87,6 +89,22 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
 
     private void handleDisconnect(StompMessage msg){
         shouldTerminate = true;
+    }
+
+    private String wrapReceiptNum(int receiptNum){
+        String result = receiptNum + "";
+        while (result.length() <= 4){
+            result = "0" + result;
+        }
+        return result;
+    }
+
+    private StringBuilder buildError(){
+        StringBuilder sb = new StringBuilder();
+        sb.append("ERROR").append("/n");
+        sb.append("receipt-id: message-").append(wrapReceiptNum(receiptCounter ++)).append("/n");
+        sb.append("message: ");
+        return sb;
     }
 
 }
