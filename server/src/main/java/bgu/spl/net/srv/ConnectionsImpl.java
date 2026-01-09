@@ -76,5 +76,5 @@ public class ConnectionsImpl <T> implements Connections <T> {
     }
 
     // TODO: NEED TO VERIFY: if a client is not subscribed to a topic it is not allowed to send messages to it, and the server should send back an ERROR frame
-    public Boolean isClientSubed() {return false;}
+    //public Boolean isClientSubbed() {return false;}
 }

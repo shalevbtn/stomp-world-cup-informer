@@ -92,7 +92,6 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
             this.isLoggedIn = true;
             // TO CHECK this.currentUser = login;
             String response = StompHelper.getConnectedFrame(version);
-            con.connect(connectionId, null);
             con.send(connectionId, response);
         }
         else {
