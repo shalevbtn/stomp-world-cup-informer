@@ -1,10 +1,5 @@
 package bgu.spl.net.impl.stomp;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
-
 import bgu.spl.net.api.StompMessagingProtocol;
 import bgu.spl.net.srv.Connections;
 import bgu.spl.net.srv.ConnectionsImpl;
@@ -17,8 +12,6 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
     private boolean shouldTerminate = false;
     private boolean isLoggedIn = false;
 
-    List<String>
-
     @Override
     public void start(int connectionId, Connections<String> connections) {
         conId = connectionId;
@@ -27,42 +20,27 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
 
     @Override
     public void process(String message) {
-        String[] lines = message.split("\n");
-        String command = lines[0];
-        List<String> params = new ArrayList<>();
-        String context = "";
-        
-        boolean isParams = true;
-        for(int i = 0; i < lines.length; i++) {
-            if(lines[i] == "\n") isParams = false;
+        StompMessage msg = new StompMessage(message);
 
-            else if(isParams) {
-                params.add(lines[i]);
-            }
-            else {
-                context += lines[i];
-            }
-        }
-
-        switch (command) {
+        switch (msg.command) {
             case "CONNECT":
-                handleConnect(params);
+                handleConnect(msg);
                 break;
 
             case "SEND":
-                handleSend(params, context);
+                handleSend(msg);
                 break;
 
             case "SUBSCRIBE":
-                handleSubscribe(params, context);
+                handleSubscribe(msg);
                 break;
 
             case "UNSUBSCRIBE":
-                handleUnSubscribe(params, context);
+                handleUnsubscribe(msg);
                 break;
 
             case "DISCONNECT":
-                handleDisconnect(params, context);
+                handleDisconnect(msg);
                 break;
 
             default:
@@ -75,30 +53,39 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
         return shouldTerminate;
     }
 
-    private void handleConnect(List<String> params){
+    private void handleConnect(StompMessage msg){
         StringBuilder sb = new StringBuilder();
 
-        String host = params.get(1);
-        String login = params.get(2);
-        String pass = params.get(3);
+        try {
+            String host = msg.getParameter("host");
+            String login = msg.getParameter("login");
+            String pass = msg.getParameter("passcode");
 
-        sb.append("Connected").append("/n");
-        sb.append(params.get(0).substring(7)).append("/n");
+            //Now validate the user & pass with the DB and connected.
+
+            sb.append("Connected").append("/n");
+            sb.append("version:").append(msg.getParameter("accept-version")).append("/n");
+        } catch(Exception ex) {
+            // Wrong parameters probablly
+        }
+        finally {
+            sb.append("\n");
+        }    
     }
 
-    private void handleSend(List<String> params, String context){
+    private void handleSend(StompMessage msg){
         
     }
 
-    private void handleSubscribe(List<String> params, String context){
+    private void handleSubscribe(StompMessage msg){
         
     }
 
-    private void handleUnSubscribe(List<String> params, String context){
+    private void handleUnsubscribe(StompMessage msg){
         
     }
 
-    private void handleDisconnect(List<String> params, String context){
+    private void handleDisconnect(StompMessage msg){
         shouldTerminate = true;
     }
 
