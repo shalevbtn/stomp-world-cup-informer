@@ -23,6 +23,7 @@ public class StompMessage {
             if (pair.length == 2) {
                 headers.put(pair[0], pair[1]);
             }
+            else throw new IllegalArgumentException("Illegal argument form");
         }
 
         if (parts.length > 1) {
