@@ -12,7 +12,7 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
     private ConnectionsImpl<String> con;
     private boolean shouldTerminate = false;
     private boolean isLoggedIn = false;
-    private HashMap<String,String> requestIdMap = new HashMap<>();
+    private HashMap<String,String> requestIdMap = new HashMap<>(); //subscriptionID -> Channel
 
     @Override
     public void start(int connectionId, Connections<String> connections) {
@@ -77,12 +77,7 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
         String host = msg.getHeader("host"); 
 
         if (login == null || passcode == null || version == null || host == null) {
-            String errorResponse = StompHelper.getErrorFrame(
-                "Malformed Frame", 
-                "Missing required headers: login, passcode, accept-version, or host", 
-                null
-            );
-            finishConnection(errorResponse);
+            handleMalFrame(null, "login, passcode, accept-version, or host");
             return;
         }
 
@@ -102,37 +97,27 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
     private void handleSubscribe(StompMessage msg){
         String channel = msg.getHeader("destination");
         String id = msg.getHeader("id");
-        String receiptNumber = msg.getHeader("receipt");
+        String receipt = msg.getHeader("receipt");
 
         if(channel == null || id == null) {
-            String errorResponse = StompHelper.getErrorFrame(
-                "Malformed Frame", 
-                "Missing required headers: destination or id", 
-                receiptNumber
-            );
-            finishConnection(errorResponse);
+            handleMalFrame(receipt, "destination or id");
             return;
         }
         requestIdMap.put(id, channel);
-        con.subscribe(connectionId, channel);
+        con.subscribe(connectionId, id, channel);
         
-        if (receiptNumber != null) {
-            String response = StompHelper.getReceiptFrame(receiptNumber);
+        if (receipt != null) {
+            String response = StompHelper.getReceiptFrame(receipt);
             con.send(connectionId, response);
         }
     }
 
     private void handleUnsubscribe(StompMessage msg){
         String id = msg.getHeader("id");
-        String receiptNumber = msg.getHeader("receipt");
+        String receipt = msg.getHeader("receipt");
 
         if(id == null) {
-            String errorResponse = StompHelper.getErrorFrame(
-                "Malformed Frame", 
-                "Missing required headers: id", 
-                receiptNumber
-            );
-            finishConnection(errorResponse);
+            handleMalFrame(receipt, "id");
             return;
         }
 
@@ -140,25 +125,46 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
         if (channel != null) {
             con.unsubscribe(connectionId, channel);
         }
+
+
         
-        if (receiptNumber != null) {
-            String response = StompHelper.getReceiptFrame(receiptNumber);
+        if (receipt != null) {
+            String response = StompHelper.getReceiptFrame(receipt);
             con.send(connectionId, response);
         }
     }
 
     private void handleDisconnect(StompMessage msg){
-        String receiptNumber = msg.getHeader("receipt");
+        String receipt = msg.getHeader("receipt");
         String response = null;
 
-        if (receiptNumber != null) 
-            response = StompHelper.getReceiptFrame(receiptNumber);
+        if (receipt != null) 
+            response = StompHelper.getReceiptFrame(receipt);
         
         finishConnection(response);
     }
 
     private void handleSend(StompMessage msg){
-        
+        String channel = msg.getHeader("destination");
+        String receipt = msg.getHeader("receipt");
+
+        if(channel == null || msg.body == null) {  //TODO: verify that msg.body != "" is a requirement
+            handleMalFrame(receipt, "destination");
+            return;
+        }
+
+        if (!requestIdMap.containsValue(channel)) {
+             String error = StompHelper.getErrorFrame("Usage Error", "Not subscribed to " + channel, receipt);
+             finishConnection(error);
+             return;
+        }
+
+        con.send(channel,msg.body);
+
+        if (receipt != null) {
+            con.send(connectionId, StompHelper.getReceiptFrame(receipt));
+        }
+
     }
 
     private void handleFailedLogin(LoginStatus s) {
@@ -190,4 +196,12 @@ public class StompProtocolImpl implements StompMessagingProtocol<String> {
         con.disconnect(connectionId);
     }
 
+    private void handleMalFrame(String receipt, String missingHeaders) {
+         String errorResponse = StompHelper.getErrorFrame(
+                "Malformed Frame", 
+                "Missing required headers: " + missingHeaders, 
+                receipt
+            );
+            finishConnection(errorResponse);
+    }
 }

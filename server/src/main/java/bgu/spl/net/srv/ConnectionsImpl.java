@@ -4,11 +4,15 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import bgu.spl.net.impl.stomp.StompHelper;
 
 public class ConnectionsImpl <T> implements Connections <T> {
-    private final Map<Integer, ConnectionHandler<T>> clients = new ConcurrentHashMap<>();
-    private final Map<String, ConcurrentLinkedQueue<Integer>> subscriptions = new ConcurrentHashMap<>();
-    private final Map<Integer,ConcurrentLinkedQueue<String>> clientChannels = new ConcurrentHashMap<>();
+    private AtomicInteger messageIdCounter = new AtomicInteger(0);
+    private final Map<Integer, ConnectionHandler<T>> clients = new ConcurrentHashMap<>(); //ConnectionID -> ConnectionHandler (Which is socket)
+    private final Map<String, ConcurrentHashMap<Integer, String>> subscriptions = new ConcurrentHashMap<>(); //Channel -> every client subscribed and the subscriptionID
+    private final Map<Integer,ConcurrentLinkedQueue<String>> clientChannels = new ConcurrentHashMap<>(); //Client -> All his channels
 
     @Override
     public boolean send(int connectionId, T msg) {
@@ -21,10 +25,20 @@ public class ConnectionsImpl <T> implements Connections <T> {
 
     @Override
     public void send(String channel, T msg) {
-        ConcurrentLinkedQueue<Integer> subs = subscriptions.get(channel);
-        if(subs != null) {
-            for (Integer cID : subs) {
-                send(cID, msg);
+        ConcurrentHashMap<Integer, String> subs = subscriptions.get(channel);
+        
+        if (subs != null) {
+            String msgBody = (String) msg;
+            
+            for (Map.Entry<Integer, String> entry : subs.entrySet()) {
+                Integer connId = entry.getKey();
+                String subId = entry.getValue();
+                
+                String messageId = Integer.toString(messageIdCounter.incrementAndGet());
+                
+                String frame = StompHelper.getMessageFrame(subId, messageId, channel, msgBody);
+                
+                send(connId, (T) frame);
             }
         }
     }
@@ -35,7 +49,7 @@ public class ConnectionsImpl <T> implements Connections <T> {
         
         if (channels != null) {
             for (String channel : channels) {
-                ConcurrentLinkedQueue<Integer> subs = subscriptions.get(channel);
+                ConcurrentHashMap<Integer, String> subs = subscriptions.get(channel);
                 if (subs != null) {
                     subs.remove(connectionId);
                 }
@@ -56,14 +70,14 @@ public class ConnectionsImpl <T> implements Connections <T> {
         clients.put(connectionId, ch);
     }
 
-    public void subscribe(int connectionId, String channel) {
-        subscriptions.computeIfAbsent(channel, k -> new ConcurrentLinkedQueue<>()).add(connectionId); // Adds the user to the channel's users list
+    public void subscribe(int connectionId, String subscriptionId ,String channel) {
+        subscriptions.computeIfAbsent(channel, k -> new ConcurrentHashMap<Integer, String>()).put(connectionId,subscriptionId); // Adds the user to the channel's users list
         clientChannels.computeIfAbsent(connectionId, k -> new ConcurrentLinkedQueue<>()).add(channel); // Adds the channel to the user's channel list
     }
 
     public void unsubscribe(int connectionId, String channel) {
         // Deletes the user from the channel's users list
-        ConcurrentLinkedQueue<Integer> subs = subscriptions.get(channel);
+        ConcurrentHashMap<Integer, String> subs = subscriptions.get(channel);
         if (subs != null) {
             subs.remove(connectionId);
         }
@@ -74,6 +88,7 @@ public class ConnectionsImpl <T> implements Connections <T> {
             userChans.remove(channel);
         }
     }
+
 
     // TODO: NEED TO VERIFY: if a client is not subscribed to a topic it is not allowed to send messages to it, and the server should send back an ERROR frame
     //public Boolean isClientSubbed() {return false;}

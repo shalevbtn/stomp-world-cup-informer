@@ -2,6 +2,8 @@
 /workspaces/Assignment 3/server/src/main/java/bgu/spl/net/srv/ConnectionsImpl.java
 /workspaces/Assignment 3/server/src/main/java/bgu/spl/net/srv/ActorThreadPool.java
 /workspaces/Assignment 3/server/src/main/java/bgu/spl/net/srv/ConnectionHandler.java
+/workspaces/Assignment 3/server/src/main/java/bgu/spl/net/impl/stomp/StompHelper.java
+/workspaces/Assignment 3/server/src/main/java/bgu/spl/net/impl/stomp/StompMessage.java
 /workspaces/Assignment 3/server/src/main/java/bgu/spl/net/srv/Connections.java
 /workspaces/Assignment 3/server/src/main/java/bgu/spl/net/impl/data/User.java
 /workspaces/Assignment 3/server/src/main/java/bgu/spl/net/impl/stomp/StompMessageEncoderDecoder.java
