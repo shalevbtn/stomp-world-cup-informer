@@ -1,62 +1,65 @@
-#include "ConnectionHandler.h"
+#include <stdlib.h>
+#include "../include/ConnectionHandler.h"
 #include <thread>
 #include <iostream>
-#include <string>
 #include <atomic>
 
-//Note: install socat: sudo apt install socat and run socat -v TCP-LISTEN:8080,reuseaddr,fork EXEC:'/bin/cat'
-
-int main() {
-    std::string host = "127.0.0.1";
-    short port = 37167;
+int main(int argc, char *argv[]) {
+    if (argc < 3) {
+        std::cerr << "Usage: " << argv[0] << " host port" << std::endl;
+        return -1;
+    }
+    std::string host = argv[1];
+    short port = atoi(argv[2]);
+    
     ConnectionHandler connectionHandler(host, port);
-    std::atomic<bool> shouldClose{false};
     if (!connectionHandler.connect()) {
-        std::cerr << "Could not connect to server." << std::endl;
+        std::cerr << "Cannot connect to " << host << ":" << port << std::endl;
         return 1;
     }
+    std::cout << "Connected! Type 'login' to authenticate." << std::endl;
 
-    std::thread reader_thread([&connectionHandler, &shouldClose]() {
-        while (!shouldClose.load()) {
+    std::atomic<bool> shouldClose{false};
+
+    // 1. Socket Reader Thread
+    std::thread reader([&connectionHandler, &shouldClose]() {
+        while(!shouldClose) {
             std::string line;
-            if (!connectionHandler.getLine(line)) {
-                // If reading fails (connection closed or error), break the loop
-                if (!shouldClose.load())
-                    std::cerr << "Failed to read from server." << std::endl;
-                else
-                    std::cout << "Connection closed." << std::endl;
-                shouldClose.store(true);
+            if (!connectionHandler.getLine(line)) { 
+                std::cout << "Disconnected from server." << std::endl;
+                shouldClose = true;
                 break;
             }
-            std::cout << "<Server> " << line << std::endl;
+            std::cout << "Server Response: " << line << std::endl;
         }
     });
 
-    // Main thread: Read input from stdin and send to server
-    while (!shouldClose.load()) {
-        std::string input;
-        if (!std::getline(std::cin, input)) {
-            shouldClose.store(true);
-            connectionHandler.close();
-            break;
-        }
-        if (input == "exit") {
-            shouldClose.store(true);
-            connectionHandler.close();
-            break;
-        }
-        if(!connectionHandler.sendLine(input) and !shouldClose.load()) {
-            std::cerr << "Failed to send to server." << std::endl;
-            shouldClose.store(true);
-            connectionHandler.close();
-            break;
+    // 2. Keyboard Input Thread
+    while(!shouldClose) {
+        const short bufsize = 1024;
+        char buf[bufsize];
+        std::cin.getline(buf, bufsize);
+        std::string line(buf);
+
+        if (line == "login") {
+            // --- FIX IS HERE ---
+            // Construct a valid STOMP frame
+            std::string frame = "CONNECT\n"
+                                "accept-version:1.2\n"
+                                "host:stomp.cs.bgu.ac.il\n"
+                                "login:meni\n"
+                                "passcode:films\n"
+                                "\n"; // End of headers
+            
+            // Send the frame followed by the NULL character
+            connectionHandler.sendFrameAscii(frame, '\0'); 
+            // -------------------
+        } else {
+            // For other commands, we just send them as lines for now (won't work until you implement more)
+            connectionHandler.sendLine(line); 
         }
     }
 
-    // Cleanup: Close connection and join reader thread
-    connectionHandler.close();
-
-    reader_thread.join();
-
+    if (reader.joinable()) reader.join();
     return 0;
 }
