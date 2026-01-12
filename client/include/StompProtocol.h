@@ -21,9 +21,16 @@ private:
     std::map<int, std::string> receiptToCommands; // receipts to commands we asked from the server
     std::map<std::string, std::map<std::string, GameStats>> gameData;
 
+
+    std::string handleLogin(std::stringstream& ss);
+    std::string handleJoin(std::stringstream& ss);
+    std::string handleExit(std::stringstream& ss);
+
+public:
+    StompProtocol();
     std::vector<std::string> processUserInput(std::string input);
-    std::vector<std::string> processKeyboardCommand(std::string line);
     bool processServerResponse(std::string response);
+
     bool isLoggedIn() const { return isConnected; }
     void setLoggedIn(bool status) { isConnected = status; }
     void setUsername(std::string name) { username = name; }
