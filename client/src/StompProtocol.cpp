@@ -67,7 +67,7 @@ std::string StompProtocol::handleJoin(std::stringstream& ss) {
     int receiptId = receiptIdCounter++;
     
     gameToSubId[gameName] = subId;
-    receiptToCommands[receiptId] = "joined " + gameName; // Remember to print this on receipt
+    receiptToCommands[receiptId] = "Joined channel " + gameName; // Remember to print this on receipt
 
     std::string frame = "SUBSCRIBE\n"
                         "destination:/" + gameName + "\n"
@@ -93,7 +93,7 @@ std::string StompProtocol::handleExit(std::stringstream& ss) {
     int subId = gameToSubId[gameName];
     int receiptId = receiptIdCounter++;
     
-    receiptToCommands[receiptId] = "exited " + gameName;
+    receiptToCommands[receiptId] = "Exited channel " + gameName;
 
     std::string frame = "UNSUBSCRIBE\n"
                         "id:" + std::to_string(subId) + "\n"
@@ -102,4 +102,45 @@ std::string StompProtocol::handleExit(std::stringstream& ss) {
 
     gameToSubId.erase(gameName);
     return frame;
+}
+
+bool StompProtocol::processServerResponse(std::string message) {
+    std::stringstream ss(message);
+    std::string responseType;
+    ss >> responseType;
+
+    if(responseType == "CONNECTED") {
+        std::cout << "Login successful" << std::endl;
+        //TODO: Log to the DB probably
+        return true;
+    }
+
+    else if(responseType == "RECEIPT") {
+        handleReceipt(ss);
+        return true;
+    }
+
+    else if(responseType == "MESSAGE") {
+        handleNewMessage(ss);
+        return true;
+    }
+    else {
+        handleError(ss);
+        return false;
+    }
+
+}
+
+void StompProtocol::handleReceipt(std::stringstream& ss) {
+    std::string receiptID;
+    ss >> receiptID;
+    std::cout << receiptToCommands.at(std::stoi(receiptID)) << std::endl;
+}
+
+void StompProtocol::handleNewMessage(std::stringstream& ss) {
+
+}
+
+void StompProtocol::handleError(std::stringstream& ss) { 
+
 }
