@@ -185,7 +185,7 @@ bool StompProtocol::processServerResponse(std::string message) {
     }
 
     else if(responseType == "MESSAGE") {
-        handleNewMessage(ss);
+        handleMessage(ss);
         return true;
     }
     else {
@@ -201,7 +201,7 @@ void StompProtocol::handleReceipt(std::stringstream& ss) {
     std::cout << receiptToCommands.at(std::stoi(receiptID)) << std::endl;
 }
 
-void StompProtocol::handleNewMessage(std::stringstream& ss) {
+void StompProtocol::handleMessage(std::stringstream& ss) {
 
 }
 

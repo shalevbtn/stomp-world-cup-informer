@@ -30,8 +30,7 @@ private:
     std::string handleExit(std::stringstream &ss);
     std::string handleSummary(std::stringstream &ss);
 
-    std::string handleExit(std::stringstream& ss);
-    void handleNewMessage(std::stringstream& ss);
+    void handleMessage(std::stringstream& ss);
     void handleReceipt(std::stringstream& ss);
     void handleError(std::stringstream& ss);
 
