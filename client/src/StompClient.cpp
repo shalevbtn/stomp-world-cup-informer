@@ -3,6 +3,7 @@
 #include <thread>
 #include <iostream>
 #include <atomic>
+#include "../include/StompProtocol.h"
 
 int main(int argc, char *argv[]) {
     StompProtocol protocol;

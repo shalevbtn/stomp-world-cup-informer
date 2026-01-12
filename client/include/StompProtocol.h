@@ -27,8 +27,8 @@ private:
 public:
     StompProtocol();
     std::vector<std::string> processUserInput(std::string input);
-    void processServerResponse(std::string response);
-
+    bool processServerResponse(std::string response);
+    std::vector<std::string> processKeyboardCommand(std::string line);
     bool isLoggedIn() const { return isConnected; }
     void setLoggedIn(bool status) { isConnected = status; }
     void setUsername(std::string name) { username = name; }
