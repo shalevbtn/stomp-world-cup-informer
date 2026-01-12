@@ -3,6 +3,7 @@
 #include <thread>
 #include <iostream>
 #include <atomic>
+#include "../include/StompProtocol.h"
 
 int main(int argc, char *argv[]) {
     StompProtocol protocol;
@@ -18,7 +19,7 @@ int main(int argc, char *argv[]) {
 
         if (line.empty()) continue;
 
-        std::vector<std::string> framesToSen = protocol.processKeyboardCommand(line);
+        std::vector<std::string> framesToSen = protocol.processUserInput(line);
 
         if (line.find("login") == 0 && !protocol.isLoggedIn() && framesToSen.size() > 0) {
             std::stringstream ss(line);
