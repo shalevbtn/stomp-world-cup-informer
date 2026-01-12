@@ -22,12 +22,14 @@ private:
     std::map<std::string, std::map<std::string, GameStats>> gameData;
 
 
-    
+    std::string handleLogin(std::stringstream& ss);
+    std::string handleJoin(std::stringstream& ss);
+    std::string handleExit(std::stringstream& ss);
 
 public:
     StompProtocol();
     std::vector<std::string> processUserInput(std::string input);
-    void processServerResponse(std::string response);
+    bool processServerResponse(std::string response);
 
     bool isLoggedIn() const { return isConnected; }
     void setLoggedIn(bool status) { isConnected = status; }
