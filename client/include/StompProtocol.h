@@ -25,6 +25,8 @@ private:
     std::string handleLogin(std::stringstream& ss);
     std::string handleJoin(std::stringstream& ss);
     std::string handleExit(std::stringstream& ss);
+    void handleReport(std::stringstream ss);
+    void handleSummary(std::stringstream ss);
 
 public:
     StompProtocol();
@@ -34,14 +36,4 @@ public:
     bool isLoggedIn() const { return isConnected; }
     void setLoggedIn(bool status) { isConnected = status; }
     void setUsername(std::string name) { username = name; }
-
-    void handleLogin(std::stringstream ss);
-    void handleLogout(std::stringstream ss);
-    void handleJoin(std::stringstream ss);
-    void handleReport(std::stringstream ss);
-    void handleSummary(std::stringstream ss);
-    void handleExit(std::stringstream ss);
-    
-public:
-    StompProtocol();   
 };
