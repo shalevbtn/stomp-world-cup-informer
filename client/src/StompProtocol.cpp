@@ -75,8 +75,14 @@ std::vector<std::string> StompProtocol::processUserInput(std::string input) {
         
         gameToSubId.erase(gameName);
     }
-    // TODO: Implement 'report', 'logout', 'summary' later
     
     return frames;
 }
+
+void handleLogin(std::stringstream ss){}
+void handleLogout(std::stringstream ss){}
+void handleJoin(std::stringstream ss){}
+void handleReport(std::stringstream ss){}
+void handleSummary(std::stringstream ss){}
+void handleExit(std::stringstream ss){}
 
