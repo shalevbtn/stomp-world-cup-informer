@@ -26,11 +26,20 @@ private:
     std::string handleLogin(std::stringstream& ss);
     std::string handleLogout(std::stringstream& ss);
     std::string handleJoin(std::stringstream& ss);
+<<<<<<< HEAD
     std::string handleReport(std::stringstream &ss);
     std::string handleExit(std::stringstream &ss);
     std::string handleSummary(std::stringstream &ss);
 
     bool checkLogin();
+=======
+    std::string handleExit(std::stringstream& ss);
+    void handleReport(std::stringstream ss);
+    void handleSummary(std::stringstream ss);
+    void handleNewMessage(std::stringstream& ss);
+    void handleReceipt(std::stringstream& ss);
+    void handleError(std::stringstream& ss);
+>>>>>>> 2688a2eeabd73f88018c6574be534b8cbea6a025
 
 public:
     StompProtocol();
