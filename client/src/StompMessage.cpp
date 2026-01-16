@@ -8,47 +8,25 @@ std::string command;
 
     void StompMessage::parse(std::string msg){
         std::stringstream ss(msg);
-        ss >> command;
+        std::getline(ss, command);
 
-        if (command == "login") {
-            handleLogin(ss);
+        std::string line;
+        while (std::getline(ss, line) && !line.empty()) {
+            std::size_t colonPos = line.find(':');
+            std::string key = line.substr(0, colonPos);
+            std::string value = line.substr(colonPos + 1);
+            headers[key] = value;
         }
-        else if (command == "logout") {
-            handleLogout(ss);
-        }
-        else if (command == "join") {
-            handleJoin(ss);
-        }
-        else if (command == "exit") {
-             handleExit(ss);
-        }
-        else if (command == "report") {
-            handleReport(ss);
-        }
-        else if (command == "summary") {
-            handleSummary(ss);
-        }
+
+        std::stringstream bodyStream; 
+        bodyStream << ss.rdbuf();
+        body = bodyStream.str();
     }
 
-    void StompMessage::handleLogin(std::stringstream& ss){
-        // Implementation for handling login message
+    std::string StompMessage::getHeader(std::string headerKey){
+        return headers[headerKey];
     }
-    void StompMessage::handleLogout(std::stringstream& ss){
-        // Implementation for handling logout message
+    
+    std::string StompMessage::getBody(){
+        return body;
     }
-    void StompMessage::handleJoin(std::stringstream& ss){
-        // Implementation for handling join message
-    }
-    void StompMessage::handleExit(std::stringstream& ss){
-        // Implementation for handling exit message
-    }
-    void StompMessage::handleReport(std::stringstream& ss){
-        // Implementation for handling report message
-    }
-    void StompMessage::handleSummary(std::stringstream& ss){
-        // Implementation for handling summary message
-    }   
-
-    StompMessage(std::string msg);
-    std::string getHeader(std::string headerKey);
-    std::string getBody();
