@@ -3,22 +3,28 @@ package bgu.spl.net.impl.stomp;
 import bgu.spl.net.api.MessageEncoderDecoder;
 import java.util.Arrays;
 
-public class StompMessageEncoderDecoder implements MessageEncoderDecoder<String> {
+public class StompMessageEncoderDecoder implements MessageEncoderDecoder<StompMessage> {
 
     private byte[] bytes = new byte[1 << 10]; // 1k
     private int len = 0;
 
     @Override
-    public String decodeNextByte(byte nextByte) { 
+    public StompMessage decodeNextByte(byte nextByte) { 
         if (nextByte == '\u0000')
-            return popString();
+            try {
+                return new StompMessage(popString());
+            } catch (Exception e) {
+                return null;
+            }
+            
         pushByte(nextByte);
         return null; 
     }
 
     @Override
-    public byte[] encode(String message) {
-        return (message + "\u0000").getBytes();
+    public byte[] encode(StompMessage message) {
+
+        return (message.toString() + "\u0000").getBytes();
     }
 
     private String popString(){
@@ -33,5 +39,4 @@ public class StompMessageEncoderDecoder implements MessageEncoderDecoder<String>
         bytes[len++] = nextByte;
     }
     
-
 }

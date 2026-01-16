@@ -8,6 +8,12 @@ public class StompMessage {
     public Map<String, String> headers = new HashMap<>();
     public String body = "";
 
+    public StompMessage(String command, Map<String,String> headers, String body) {
+        this.command = command;
+        this.headers = headers;
+        this.body = body;
+    }
+
     public StompMessage(String rawMessage) {
         parse(rawMessage);
     }
@@ -33,5 +39,21 @@ public class StompMessage {
 
     public String getHeader(String key) {
         return headers.get(key);
+    }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+
+        sb.append(command).append("\n");
+
+        for (Map.Entry<String, String> entry : headers.entrySet()) {
+            sb.append(entry.getKey()).append(":").append(entry.getValue()).append("\n");
+        }
+
+        sb.append("\n");
+        sb.append(body);
+
+        return sb.toString();
     }
 }

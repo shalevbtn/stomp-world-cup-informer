@@ -22,11 +22,14 @@ std::string command;
         bodyStream << ss.rdbuf();
         body = bodyStream.str();
     }
+    std::string StompMessage::getCommand(){
+        return command;
+    }
 
     std::string StompMessage::getHeader(std::string headerKey){
         return headers[headerKey];
     }
-    
+
     std::string StompMessage::getBody(){
         return body;
     }

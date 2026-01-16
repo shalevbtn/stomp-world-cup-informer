@@ -1,39 +1,42 @@
 package bgu.spl.net.impl.stomp;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class StompHelper {
 
-    public static String getConnectedFrame(String version) {
-        return  "CONNECTED\n" +
-                "version: " + version + "\n";
+    public static StompMessage getConnectedFrame(String version) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("version", version);
+
+        return new StompMessage("CONNECTED", headers, "");
     }
 
-    public static String getErrorFrame(String messageHeader, String description, String receiptId) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("ERROR\n");
-        
+    public static StompMessage getReceiptFrame(String receiptId) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("receipt-id", receiptId);
+
+        return new StompMessage("RECEIPT", headers, "");
+    }
+
+    public static StompMessage getMessageFrame(String subscriptionId, String messageId, String destination, String body) {
+        Map<String, String> headers = new HashMap<>();
+        headers.put("subscription", subscriptionId);
+        headers.put("message-id", messageId);
+        headers.put("destination", destination);
+
+        return new StompMessage("MESSAGE", headers, body);
+    }
+    
+    public static StompMessage getErrorFrame(String messageHeader, String description, String receiptId) {
+        Map<String, String> headers = new HashMap<>();
+
         if (receiptId != null) {
-            sb.append("receipt-id:").append(receiptId).append("\n");
+            headers.put("receipt-id", receiptId);
         }
-        
-        sb.append("message:").append(messageHeader).append("\n")
-          .append("\n")
-          .append(description).append("\n");
-          
-        return sb.toString();
-    }
 
-    public static String getReceiptFrame(String receiptId) {
-        return "RECEIPT\n" +
-               "receipt-id:" + receiptId + "\n" +
-               "\n";
-    }
+        headers.put("message", messageHeader);
 
-    public static String getMessageFrame(String subscriptionId, String messageId, String destination, String body) {
-        return "MESSAGE\n" +
-               "subscription:" + subscriptionId + "\n" +
-               "message-id:" + messageId + "\n" +
-               "destination:" + destination + "\n" +
-               "\n" +
-               body + "\n";
+        return new StompMessage("ERROR", headers, description);
     }
 }

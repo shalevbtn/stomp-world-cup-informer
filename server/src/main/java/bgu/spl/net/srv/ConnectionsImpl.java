@@ -7,6 +7,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import bgu.spl.net.impl.stomp.StompHelper;
+import bgu.spl.net.impl.stomp.StompMessage;
 
 public class ConnectionsImpl <T> implements Connections <T> {
     private AtomicInteger messageIdCounter = new AtomicInteger(0);
@@ -36,7 +37,7 @@ public class ConnectionsImpl <T> implements Connections <T> {
                 
                 String messageId = Integer.toString(messageIdCounter.incrementAndGet());
                 
-                String frame = StompHelper.getMessageFrame(subId, messageId, channel, msgBody);
+                StompMessage frame = StompHelper.getMessageFrame(subId, messageId, channel, msgBody);
                 
                 send(connId, (T) frame);
             }

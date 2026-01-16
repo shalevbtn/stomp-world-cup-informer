@@ -2,6 +2,7 @@
 
 #include "../include/ConnectionHandler.h"
 #include "../include/event.h"
+#include "../include/StompMessage.h"
 
 struct GameStats {
     std::map<std::string, std::string> general_stats;
@@ -26,7 +27,7 @@ private:
     std::string handleLogin(std::stringstream& ss);
     std::string handleLogout(std::stringstream& ss);
     std::string handleJoin(std::stringstream& ss);
-    std::vector<std::string> handleReport(std::stringstream &ss);
+    void handleReport(std::stringstream &ss);
     std::string handleExit(std::stringstream &ss);
     std::string handleSummary(std::stringstream &ss);
 
@@ -38,7 +39,7 @@ private:
 
 public:
     StompProtocol();
-    std::vector<std::string> processUserInput(std::string input);
+    void processUserInput(StompMessage msg);
     bool processServerResponse(std::string response);
 
     bool isLoggedIn() const { return isConnected; }
