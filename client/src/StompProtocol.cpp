@@ -86,7 +86,7 @@ std::string StompProtocol::handleJoin(std::stringstream& ss) {
     return frame;
 }
 
-std::string StompProtocol::handleReport(std::stringstream& ss) {
+std::vector<std::string> StompProtocol::handleReport(std::stringstream& ss) {
     if(!checkLogin) return;
 
     std::string allFrames = "";

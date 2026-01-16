@@ -4,9 +4,11 @@
 #include <iostream>
 #include <atomic>
 #include "../include/StompProtocol.h"
+#include "../include/StompEncoderDecoder.h"
 
 int main(int argc, char *argv[]) {
     StompProtocol protocol;
+    StompEncoderDecoder encdec;
     ConnectionHandler* connectionHandler = nullptr;
     std::atomic<bool> shouldClose{false};
     std::thread reader;
@@ -19,7 +21,8 @@ int main(int argc, char *argv[]) {
 
         if (line.empty()) continue;
 
-        std::vector<std::string> framesToSend = protocol.processUserInput(line);
+        StompMessage userRequest = encdec.processUserInput(line);
+        std::vector<StompMessage> framesToSend = protocol.process(userRequest);
 
         if (line.find("login") == 0 && !protocol.isLoggedIn() && framesToSend.size() > 0) {
             std::stringstream ss(line);

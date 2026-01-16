@@ -12,6 +12,7 @@ public class StompProtocolImpl implements StompMessagingProtocol<StompMessage> {
     private ConnectionsImpl<StompMessage> con;
     private boolean shouldTerminate = false;
     private boolean isLoggedIn = false;
+    
     private HashMap<String,String> requestIdMap = new HashMap<>(); //subscriptionID -> Channel
     private HashMap<String,String> ChannelSubIdMap = new HashMap<>(); //Channel -> subscriptionID
 
@@ -82,7 +83,7 @@ public class StompProtocolImpl implements StompMessagingProtocol<StompMessage> {
 
         if (status == LoginStatus.LOGGED_IN_SUCCESSFULLY || status == LoginStatus.ADDED_NEW_USER) {
             this.isLoggedIn = true;
-            // TO CHECK this.currentUser = login;
+            //TODO: TO CHECK this.currentUser = login;
             StompMessage response = StompHelper.getConnectedFrame(version);
             con.send(connectionId, response);
         }
