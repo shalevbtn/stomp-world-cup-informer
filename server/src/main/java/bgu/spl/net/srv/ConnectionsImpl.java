@@ -29,7 +29,7 @@ public class ConnectionsImpl <T> implements Connections <T> {
         ConcurrentHashMap<Integer, String> subs = subscriptions.get(channel);
         
         if (subs != null) {
-            String msgBody = (String) msg;
+            String msgBody = ((StompMessage)msg).body; 
             
             for (Map.Entry<Integer, String> entry : subs.entrySet()) {
                 Integer connId = entry.getKey();
@@ -89,8 +89,4 @@ public class ConnectionsImpl <T> implements Connections <T> {
             userChans.remove(channel);
         }
     }
-
-
-    // TODO: NEED TO VERIFY: if a client is not subscribed to a topic it is not allowed to send messages to it, and the server should send back an ERROR frame
-    //public Boolean isClientSubbed() {return false;}
 }
