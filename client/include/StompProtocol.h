@@ -39,7 +39,7 @@ private:
 
 public:
     StompProtocol();
-    void process(StompMessage msg);
+    std::vector<StompMessage> process(StompMessage msg);
     bool processServerResponse(std::string response);
 
     bool isLoggedIn() const { return isConnected; }

@@ -5,10 +5,11 @@
 StompProtocol::StompProtocol() 
 : username(""), isConnected(false), subIdCounter(0), receiptIdCounter(0) {}
 
-void StompProtocol::process(StompMessage msg) {
+std::vector<StompMessage> StompProtocol::process(StompMessage msg) {
 
     std::string command = msg.getCommand();
 
+    //TODO: I have this thing twice.. Is it smart?
     if (command == "CONNECT") {
         handleLogin(msg);
     }
@@ -24,7 +25,7 @@ void StompProtocol::process(StompMessage msg) {
     else if (command == "UNSUBSCRIBE") {
         handleExit(msg);
     }
-    else {
+    else if{
         handleSummary(msg);
     }
     //TODO: handle unexepted commands

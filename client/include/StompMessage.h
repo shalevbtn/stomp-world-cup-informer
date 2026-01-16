@@ -18,7 +18,7 @@ private:
 public:
 
     StompMessage(std::string msg);
-
+    StompMessage(std::string cm, std::map<std::string, std::string> hd, std::string bd);
     std::string getCommand();
     std::string getHeader(std::string headerKey);
     std::string getBody();

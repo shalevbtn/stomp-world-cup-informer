@@ -2,9 +2,11 @@
 
 std::string command;
 
-    StompMessage::StompMessage(std::string msg){
-        parse(msg);
+    StompMessage::StompMessage(std::string rawMessage){
+        parse(rawMessage);
     }
+
+    StompMessage::StompMessage(std::string cm, std::map<std::string, std::string> hd, std::string bd) : command(cm), headers(hd), body(bd) {}
 
     void StompMessage::parse(std::string msg){
         std::stringstream ss(msg);
@@ -22,7 +24,8 @@ std::string command;
         bodyStream << ss.rdbuf();
         body = bodyStream.str();
     }
-    std::string StompMessage::getCommand(){
+    
+    std::string StompMessage::getCommand() {
         return command;
     }
 
