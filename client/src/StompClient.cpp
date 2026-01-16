@@ -19,9 +19,9 @@ int main(int argc, char *argv[]) {
 
         if (line.empty()) continue;
 
-        std::vector<std::string> framesToSen = protocol.processUserInput(line);
+        std::vector<std::string> framesToSend = protocol.processUserInput(line);
 
-        if (line.find("login") == 0 && !protocol.isLoggedIn() && framesToSen.size() > 0) {
+        if (line.find("login") == 0 && !protocol.isLoggedIn() && framesToSend.size() > 0) {
             std::stringstream ss(line);
             std::string cmd, hostPort;
             ss >> cmd >> hostPort;
@@ -55,5 +55,11 @@ int main(int argc, char *argv[]) {
                 }
             });
         }
+        if (connectionHandler && protocol.isLoggedIn()) {
+        for (const auto& frame : framesToSend) {
+            connectionHandler->sendFrameAscii(frame, '\0');
+        }
+}
     return 0;
+    }
 }
