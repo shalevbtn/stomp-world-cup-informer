@@ -56,7 +56,7 @@ public class StompProtocolImpl implements StompMessagingProtocol<StompMessage> {
             case "DISCONNECT":
                 handleDisconnect(msg);
                 break;
-
+            //TODO: add summary
             default:
                 StompMessage err = StompHelper.getErrorFrame("Unknown Command", "Command not recognized", null);
                 con.send(connectionId, err);

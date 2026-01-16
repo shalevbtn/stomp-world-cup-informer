@@ -24,12 +24,12 @@ private:
     std::map<std::string, std::map<std::string, std::vector<Event>>> gameData;
 
 
-    std::string handleLogin(std::stringstream& ss);
-    std::string handleLogout(std::stringstream& ss);
-    std::string handleJoin(std::stringstream& ss);
-    void handleReport(std::stringstream &ss);
-    std::string handleExit(std::stringstream &ss);
-    std::string handleSummary(std::stringstream &ss);
+    void handleLogin(StompMessage& msg);
+    void handleLogout(StompMessage& msg);
+    void handleJoin(StompMessage& msg);
+    void handleReport(StompMessage& msg);
+    void handleExit(StompMessage& msg);
+    void handleSummary(StompMessage& msg);
 
     void handleMessage(std::stringstream& ss);
     void handleReceipt(std::stringstream& ss);
@@ -39,7 +39,7 @@ private:
 
 public:
     StompProtocol();
-    void processUserInput(StompMessage msg);
+    void process(StompMessage msg);
     bool processServerResponse(std::string response);
 
     bool isLoggedIn() const { return isConnected; }

@@ -1,76 +1,74 @@
 #include "../include/StompProtocol.h"
-#include "StompProtocol.h"
+#include "../include/StompHelper.h"
+
 
 StompProtocol::StompProtocol() 
 : username(""), isConnected(false), subIdCounter(0), receiptIdCounter(0) {}
 
-std::vector<std::string> StompProtocol::processUserInput(std::string input) {
-    std::vector<std::string> frames;
-    std::stringstream ss(input);
-    std::string command;
-    ss >> command;
+void StompProtocol::process(StompMessage msg) {
 
-    if (command == "login") {
-        std::string frame = handleLogin(ss);
-        if(frame.empty()) {
-            return frames;
-        }
-        else {frames.push_back(frame);}
+    std::string command = msg.getCommand();
+
+    if (command == "CONNECT") {
+        handleLogin(msg);
     }
-    else if (command == "join") {
-        std::string frame = handleJoin(ss);
-        if(frame.empty()) {
-            return frames;
-        }
-        else {frames.push_back(frame);}
+    else if (command == "DISCONNECT") {
+        handleLogout(msg);
     }
-    else if (command == "exit") {
-        std::string frame = handleExit(ss);
-        if(frame.empty()) {
-            return frames;
-        }
-        else {frames.push_back(frame);}
+    else if (command == "SUBSCRIBE") {
+        handleJoin(msg);
     }
-    // TODO: Implement 'report', 'summary' later
-    
-    return frames;
+    else if (command == "SEND") {
+        handleReport(msg);
+    }
+    else if (command == "UNSUBSCRIBE") {
+        handleExit(msg);
+    }
+    else {
+        handleSummary(msg);
+    }
+    //TODO: handle unexepted commands
+    //TODO: להסביר לי מה עושה הפונקציה הזו, ואיך אפשר לשלוח דברים בלי שיש שדה קונקשיין או קונקשיין הנדלר
 }
 
-std::string StompProtocol::handleLogin(std::stringstream& ss) {
-    std::string hostPort, user, pass;
-    ss >> hostPort >> user >> pass;
+void StompProtocol::handleLogin(StompMessage& msg) {
+    try{
+        std::string hostPort(msg.getHeader("host"));
+        std::string user(msg.getHeader("login"));
+        std::string pass(msg.getHeader("passcode"));
 
-    if (isConnected) {
-        std::cout << "The client is already logged in, log out before trying again" << std::endl;
-        return;
-    }
-
-    username = user;
+        username = user;
     
-    std::string frame = "CONNECT\n"
-                        "accept-version:1.2\n"
-                        "host:stomp.cs.bgu.ac.il\n"
-                        "login:" + user + "\n"
-                        "passcode:" + pass + "\n"
-                        "\n";
-    return frame;
+        if (isConnected) {
+            std::cout << "The client is already logged in, log out before trying again" << std::endl;
+            return;
+        }
+
+        StompMessage connectMsg = StompHelper::getLoginFrame(hostPort, user, pass);
+
+        //TODO: login
+
+    } catch(...){
+        std::cout << "”Could not connect to server" << std::endl;
+    }
 }
 
-std::string StompProtocol::handleLogout(std::stringstream& ss) {
-    std::string hostPort, user, pass;
+void StompProtocol::handleLogout(StompMessage& msg) {
+    std::string hostPort(msg.getHeader("host"));
+    std::string user(msg.getHeader("login"));
+    std::string pass(msg.getHeader("passcode"));
+
     if(!checkLogin) return;
     
-    std::string frame = "DISCONNECT\n"
-                        "receipt:" + std::to_string(receiptIdCounter++) + "\n"
-                        "\n";
-    return frame;
+    StompMessage disconnectMsg = StompHelper::getLogoutFrame(user);
 }
 
-std::string StompProtocol::handleJoin(std::stringstream& ss) {
+void StompProtocol::handleJoin(StompMessage& msg) {
     if(!checkLogin) return;
 
-    std::string gameName;
-    ss >> gameName;
+    std::string gameName = msg.getHeader("destination");
+    std::string subIdStr = msg.getHeader("id");
+    std::string receiptIdStr = msg.getHeader("receipt");
 
     int subId = subIdCounter++;
     int receiptId = receiptIdCounter++;
@@ -83,13 +81,14 @@ std::string StompProtocol::handleJoin(std::stringstream& ss) {
                         "id:" + std::to_string(subId) + "\n"
                         "receipt:" + std::to_string(receiptId) + "\n"
                         "\n";
-    return frame;
+    return frame; //TODO: so all the frames we made shouln'd be made here? It was a big mistake? because proccess just proccess the input and this 
+                  //frame is only after the server handle the message and sent a receipt
 }
 
-std::vector<std::string> StompProtocol::handleReport(std::stringstream& ss) {
+void StompProtocol::handleReport(StompMessage& msg) {
     if(!checkLogin) return;
 
-    std::string allFrames = "";
+    std::vector<std::string> allFrames;
     std::string filePath;
     ss >> filePath;
 
@@ -129,17 +128,15 @@ std::vector<std::string> StompProtocol::handleReport(std::stringstream& ss) {
             frame += "    " + update.first + ": " + update.second + "\n";
         }
         
-        frame += "description:\n" + event.get_discription() + "\n" + "\0";
+        frame += "description:\n" + event.get_discription() + "\n";
 
-        allFrames += frame;
+        allFrames.push_back(frame);
     }
-    return allFrames;
 }
 
-std::string StompProtocol::handleExit(std::stringstream& ss) {
+void StompProtocol::handleExit(StompMessage& msg) {
     if(!checkLogin) return;
-    std::string gameName;
-    ss >> gameName;
+    std::string gameName = msg.getHeader("destination");
 
     if (gameToSubId.find(gameName) == gameToSubId.end()) {
         std::cout << "You are not subscribed to " << gameName << std::endl;
@@ -157,7 +154,6 @@ std::string StompProtocol::handleExit(std::stringstream& ss) {
                         "\n";
 
     gameToSubId.erase(gameName);
-    return frame;
 }
 
 bool StompProtocol::checkLogin(){
