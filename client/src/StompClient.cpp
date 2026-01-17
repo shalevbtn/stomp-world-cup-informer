@@ -21,9 +21,13 @@ int main(int argc, char *argv[]) {
         if (line.empty()) continue;
 
         StompMessage userRequest = InputHandler::processUserInput(line);
+        protocol.clearFrames();
         std::vector<StompMessage> framesToSend = protocol.process(userRequest);
 
         if (line.find("login") == 0 && !protocol.isLoggedIn() && framesToSend.size() > 0) {
+            if (reader.joinable()) 
+                reader.join();
+
             std::stringstream ss(line);
             std::string cmd, hostPort;
             ss >> cmd >> hostPort;
@@ -58,10 +62,13 @@ int main(int argc, char *argv[]) {
             });
         }
         if (connectionHandler && protocol.isLoggedIn()) {
-        for (const auto& frame : framesToSend) {
-            connectionHandler->sendFrameAscii(frame, '\0');
+            for (const auto& frame : framesToSend) {
+                connectionHandler->sendFrameAscii(frame.toString(), '\0');
+            }
         }
-}
-    return 0;
     }
+
+    if (reader.joinable()) reader.join();
+    if (connectionHandler) delete connectionHandler;
+    return 0;
 }

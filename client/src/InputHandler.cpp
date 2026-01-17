@@ -6,44 +6,34 @@ StompMessage InputHandler::processUserInput(const std::string& input) {
     std::string command;
     ss >> command;
 
-    if (command == "login")
-        return handleLogin(ss);
+    if (command == "login") return parseLogin(ss);
+    if (command == "join") return parseJoin(ss);
+    if (command == "exit") return parseExit(ss);
+    if (command == "report") return parseReport(ss);
+    if (command == "logout") return parseLogout(ss);
+    if (command == "summary") return parseSummary(ss);
 
-    if (command == "join")
-        return handleJoin(ss);
-
-    if (command == "exit")
-        return handleExit(ss);
-
-    if (command == "report")
-        return handleReport(ss);
-
-    if (command == "summary")
-        return handleSummary(ss);
-
-    if (command == "logout")
-        return handleLogout(ss);
-
-    return StompMessage("INVALID", {}, "Invalid command");
+    // Unknown command
+    return StompMessage("INVALID", {}, "Unknown command");
 }
 
 
 // login {host:port} {username} {password}
-StompMessage InputHandler::handleLogin(std::stringstream& ss) {
-    std::string hostPort, user, pass;
-    if (!(ss >> hostPort >> user >> pass))
+StompMessage InputHandler::parseLogin(std::stringstream& ss) {
+    std::string hostPort, username, pass;
+    if (!(ss >> hostPort >> username >> pass))
         return StompMessage("INVALID", {}, "Invalid login arguments");
 
     std::map<std::string, std::string> headers;
     headers["host"] = hostPort;
-    headers["login"] = user;
+    headers["login"] = username;
     headers["passcode"] = pass;
 
     return StompMessage("CONNECT", headers, "");
 }
 
 // join {game_name}
-StompMessage InputHandler::handleJoin(std::stringstream& ss) {
+StompMessage InputHandler::parseJoin(std::stringstream& ss) {
     std::string game;
     if (!(ss >> game))
         return StompMessage("INVALID", {}, "Invalid join arguments");
@@ -55,7 +45,7 @@ StompMessage InputHandler::handleJoin(std::stringstream& ss) {
 }
 
 // exit {game_name}
-StompMessage InputHandler::handleExit(std::stringstream& ss) {
+StompMessage InputHandler::parseExit(std::stringstream& ss) {
     std::string game;
     if (!(ss >> game))
         return StompMessage("INVALID", {}, "Invalid exit arguments");
@@ -67,7 +57,7 @@ StompMessage InputHandler::handleExit(std::stringstream& ss) {
 }
 
 // report {file}
-StompMessage InputHandler::handleReport(std::stringstream& ss) {
+StompMessage InputHandler::parseReport(std::stringstream& ss) {
     std::string file;
     if (!(ss >> file))
         return StompMessage("INVALID", {}, "Invalid report arguments");
@@ -80,7 +70,7 @@ StompMessage InputHandler::handleReport(std::stringstream& ss) {
 }
 
 // summary {game_name} {user} {file}
-StompMessage InputHandler::handleSummary(std::stringstream& ss) {
+StompMessage InputHandler::parseSummary(std::stringstream& ss) {
     std::string game, user, file;
     if (!(ss >> game >> user >> file))
         return StompMessage("INVALID", {}, "Invalid summary arguments");
@@ -93,6 +83,6 @@ StompMessage InputHandler::handleSummary(std::stringstream& ss) {
     return StompMessage("SUMMARY", headers, "");
 }
 
-StompMessage InputHandler::handleLogout(std::stringstream&) {
+StompMessage InputHandler::parseLogout(std::stringstream&) {
     return StompMessage("DISCONNECT", {}, "");
 }

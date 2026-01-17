@@ -6,12 +6,12 @@
 
 class InputHandler {
 private:
-    static StompMessage handleLogin(std::stringstream& ss);
-    static StompMessage handleLogout(std::stringstream& ss);
-    static StompMessage handleJoin(std::stringstream& ss);
-    static StompMessage handleExit(std::stringstream& ss);
-    static StompMessage handleReport(std::stringstream& ss);
-    static StompMessage handleSummary(std::stringstream& ss);
+    static StompMessage parseLogin(std::stringstream& ss);
+    static StompMessage parseLogout(std::stringstream& ss);
+    static StompMessage parseJoin(std::stringstream& ss);
+    static StompMessage parseExit(std::stringstream& ss);
+    static StompMessage parseReport(std::stringstream& ss);
+    static StompMessage parseSummary(std::stringstream& ss);
 
 public:
     static StompMessage processUserInput(const std::string& input);
