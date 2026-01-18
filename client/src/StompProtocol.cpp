@@ -31,8 +31,6 @@ std::vector<StompMessage> StompProtocol::process(StompMessage msg) {
     }
 
     return frames;
-    //TODO: handle unexepted commands
-    //TODO: להסביר לי מה עושה הפונקציה הזו, ואיך אפשר לשלוח דברים בלי שיש שדה קונקשיין או קונקשיין הנדלר
 }
 
 bool StompProtocol::processServerResponse(std::string message) {
@@ -119,8 +117,6 @@ void StompProtocol::handleReport(StompMessage& msg) {
     std::string team_b_name = nne.team_b_name;
     std::string game_name = team_a_name + "_" + team_b_name;
 
-    
-
     std::vector<Event> sortedEvents = nne.events;
     std::sort(sortedEvents.begin(), sortedEvents.end(), [](const Event& a, const Event& b) {
         return a.get_time() < b.get_time();
@@ -128,12 +124,12 @@ void StompProtocol::handleReport(StompMessage& msg) {
 
     msg.removeHeader("file_path");
     msg.addHeader("user-file", filePath);
+    msg.addHeader("destination", "/" + game_name);
     
     for(Event event : sortedEvents){
         gameData[game_name][username].push_back(event);
 
         StompMessage eventMessage = msg;
-        eventMessage.addHeader("destination", "/" + game_name);
         eventMessage.setBody(getReportBody(event));       
         frames.push_back(eventMessage);
     }
