@@ -310,8 +310,15 @@ void StompProtocol::handleReceipt(std::stringstream& ss) {
     std::cout << receiptToCommands[std::stoi(receiptID)] << std::endl;
 }
 
-void StompProtocol::handleError(std::stringstream& ss) { 
-
+void StompProtocol::handleError(std::stringstream& ss) { // TODO: go over this function to see everything is clear
+    std::string line;
+    std::string errMsg;
+    // Parse the rest of the body (after the "ERROR" command)
+    while (std::getline(ss, line)) {
+        std::cout << line << std::endl; // Print the error details to the screen
+    }
+    // Setup for graceful shutdown
+    isConnected = false; 
 }
 
 bool StompProtocol::checkLogin(){

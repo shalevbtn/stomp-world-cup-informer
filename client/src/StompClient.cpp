@@ -61,6 +61,7 @@ int main(int argc, char *argv[]) {
                 }
             });
         }
+        
         if (connectionHandler && protocol.isLoggedIn()) {
             for (const auto& frame : framesToSend) {
                 connectionHandler->sendFrameAscii(frame.toString(), '\0');
