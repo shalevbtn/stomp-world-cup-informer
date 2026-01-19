@@ -4,13 +4,6 @@
 #include "../include/event.h"
 #include "../include/StompMessage.h"
 
-struct GameStats {
-    std::map<std::string, std::string> general_stats;
-    std::map<std::string, std::string> team_a_stats;
-    std::map<std::string, std::string> team_b_stats;
-    std::vector<std::string> event_reports; 
-};
-
 class StompProtocol
 {
 private:

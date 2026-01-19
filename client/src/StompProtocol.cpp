@@ -27,7 +27,7 @@ std::vector<StompMessage> StompProtocol::process(StompMessage msg) {
         handleSummary(msg);
     }
     else {
-        //TODO: Handle Unknown command
+        // TODO: Handle Unknown command
     }
 
     return frames;
@@ -80,7 +80,7 @@ void StompProtocol::handleLogout(StompMessage& msg) {
     if(!checkLogin()) return;
 
     int receiptId = receiptIdCounter++;
-    receiptToCommands[receiptId] = "DISCONNECT";
+    receiptToCommands[receiptId] = "Disconnected from the server.";
     msg.addHeader("receipt", std::to_string(receiptId));
 
     frames.push_back(msg);
@@ -204,18 +204,105 @@ void StompProtocol::handleSummary(StompMessage& msg) {
     std::cout << "Summary written to " << file << std::endl;
 }
 
-void StompProtocol::handleMessage(std::stringstream& ss) {
+void StompProtocol::handleMessage(std::stringstream& ss) { // TODO: go over this function to see everything is clear.
+    std::string line;
+    std::string gameName;
 
+    while (std::getline(ss, line) && !line.empty()) {
+        // We look for the "destination" header to know which game this is
+        if (line.find("destination:") == 0) {
+            gameName = line.substr(12); // Remove "destination:"
+            // Remove the leading '/' if it exists (e.g., "/germany_spain" -> "germany_spain")
+            if (!gameName.empty() && gameName[0] == '/') {
+                gameName = gameName.substr(1);
+            }
+        }
+    }
+
+    // 2. Parse Body (Reconstruct the Event)
+    std::string user;
+    std::string teamA;
+    std::string teamB;
+    std::string eventName;
+    int time = 0;
+    std::string description;
+    std::map<std::string, std::string> gameUpdates;
+    std::map<std::string, std::string> teamAUpdates;
+    std::map<std::string, std::string> teamBUpdates;
+
+    // Parser state tracking
+    // 0=Header/Meta, 1=General, 2=TeamA, 3=TeamB, 4=Desc
+    int section = 0; 
+
+    while (std::getline(ss, line)) {
+        // The assignment usually requires printing received messages to screen
+        std::cout << line << std::endl; 
+
+        if (line.empty()) continue;
+
+        // Check for section headers
+        if (line == "general game updates:") { section = 1; continue; }
+        if (line == "team a updates:")     { section = 2; continue; }
+        if (line == "team b updates:")     { section = 3; continue; }
+        if (line == "description:")        { section = 4; continue; }
+
+        // Parse content based on section
+        if (section == 0) {
+            // Parsing Metadata (User, Teams, Time, Event Name)
+            size_t split = line.find(':');
+            if (split != std::string::npos) {
+                std::string key = line.substr(0, split);
+                std::string val = line.substr(split + 1);
+                // Trim leading space from value if exists
+                if (!val.empty() && val[0] == ' ') val = val.substr(1);
+
+                if (key == "user") user = val;
+                else if (key == "team a") teamA = val;
+                else if (key == "team b") teamB = val;
+                else if (key == "event name") eventName = val;
+                else if (key == "time") time = std::stoi(val);
+            }
+        } 
+        else if (section >= 1 && section <= 3) {
+            // Parsing Updates (Key: Value)
+            size_t split = line.find(':');
+            if (split != std::string::npos) {
+                // Remove leading tab if present (standard formatting from your getReportBody)
+                size_t keyStart = 0;
+                while (keyStart < line.length() && (line[keyStart] == '\t' || line[keyStart] == ' ')) keyStart++;
+                
+                std::string key = line.substr(keyStart, split - keyStart);
+                std::string val = line.substr(split + 1);
+                if (!val.empty() && val[0] == ' ') val = val.substr(1);
+
+                if (section == 1) gameUpdates[key] = val;
+                else if (section == 2) teamAUpdates[key] = val;
+                else if (section == 3) teamBUpdates[key] = val;
+            }
+        }
+        else if (section == 4) {
+            // Parsing Description (Append remaining lines)
+            description += line + "\n";
+        }
+    }
+
+    // 3. Update the Game Data structure
+    // We only save if we successfully parsed the user and game name
+    if (!gameName.empty() && !user.empty()) {
+        Event event(teamA, teamB, eventName, time, gameUpdates, teamAUpdates, teamBUpdates, description);
+        
+        // This is safe because 'processServerResponse' holds the lock (from previous step)
+        gameData[gameName][user].push_back(event);
+    }
 }
 
 void StompProtocol::handleReceipt(std::stringstream& ss) {
     std::string receiptID;
     ss >> receiptID;
-    std::cout << receiptToCommands.at(std::stoi(receiptID)) << std::endl;
+    std::cout << receiptToCommands[std::stoi(receiptID)] << std::endl;
 }
 
 void StompProtocol::handleError(std::stringstream& ss) { 
-
 
 }
 
