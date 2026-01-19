@@ -4,7 +4,7 @@ StompMessage::StompMessage(std::string rawMessage) : command(""), headers(), bod
     parse(rawMessage);
 }
 
-StompMessage::StompMessage(std::string cm, std::map<std::string, std::string> hd, std::string bd) : command(cm), headers(hd), body(bd) {}
+StompMessage::StompMessage(std::string cmd, std::map<std::string, std::string> hd, std::string bd) : command(cmd), headers(hd), body(bd) {}
 
 void StompMessage::parse(std::string msg){
     std::stringstream ss(msg);
