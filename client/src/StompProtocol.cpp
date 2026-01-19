@@ -97,16 +97,12 @@ void StompProtocol::handleJoin(StompMessage& msg) {
     int receiptId = receiptIdCounter++;
     
     gameToSubId[gameName] = subId;
-    receiptToCommands[receiptId] = "Joined channel " + gameName; // Remember to print this on receipt
+    receiptToCommands[receiptId] = "Joined channel " + gameName; //TODO: Remember to print this on receipt
 
     msg.addHeader("id", std::to_string(subId));
     msg.addHeader("receipt", std::to_string(receiptId));
     
     frames.push_back(msg);
-
-    //return frame;
-    // TODO: so all the frames we made shouln'd be made here? It was a big mistake? because proccess just proccess the input and this 
-    //frame is only after the server handle the message and sent a receipt*/
 }
 
 void StompProtocol::handleReport(StompMessage& msg) {
