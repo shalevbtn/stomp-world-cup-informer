@@ -9,6 +9,7 @@ the methods below.
 """
 
 import socket
+import sqlite3
 import sys
 import threading
 
@@ -30,15 +31,58 @@ def recv_null_terminated(sock: socket.socket) -> str:
 
 
 def init_database():
-    pass
-
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                VARCHAR(30) username PRIMARY KEY,
+                VARCHAR(30) password NOT NULL,
+                DATETIME registration_date NOT NULL
+            );
+            CREATE TABLE IF NOT EXISTS login_history (
+                VARCHAR(30) username FOREIGN KEY REFERENCES users(name),
+                DATETIME login_time NOT NULL,
+                DATETIME logout_time
+            );
+            CREATE TABLE IF NOT EXISTS file_tracking (
+                VARCHAR(30) username FOREIGN KEY REFERENCES users(name),
+                VARCHAR(100) filename NOT NULL,
+                DATETIME upload_time,
+                VARCHAR(30) game_channel
+            );  
+        """)
+        conn.commit()
+        conn.close()
+    except sqlite3.Error as e:
+        print(f"Error connecting to database: {e}")
+        return
 
 def execute_sql_command(sql_command: str) -> str:
-    return "done"
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute(sql_command)
+        conn.commit()
+        conn.close()
+        return "done"
+    except sqlite3.Error as e:
+        print(f"Error connecting to database: {e}")
+        return None
 
 
 def execute_sql_query(sql_query: str) -> str:
-    return "done"
+    try:
+        conn = sqlite3.connect(DB_FILE)
+        cursor = conn.cursor()
+        cursor.execute(sql_query)
+        results = cursor.fetchall()
+        conn.close()
+        result_str = "\n".join([str(row) for row in results])
+        return result_str if result_str else "no results"
+    except sqlite3.Error as e:
+        print(f"Error connecting to database: {e}")
+        return None
 
 
 def handle_client(client_socket: socket.socket, addr):
