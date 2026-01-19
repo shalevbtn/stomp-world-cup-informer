@@ -2,7 +2,9 @@
 #include <fstream>
 
 StompProtocol::StompProtocol() 
-: username(""), isConnected(false), subIdCounter(0), receiptIdCounter(0) {}
+:   username(""), isConnected(false), subIdCounter(0), receiptIdCounter(0),
+    mtx(), gameToSubId(),receiptToCommands(),
+    gameData(), frames() {}
 
 std::vector<StompMessage> StompProtocol::process(StompMessage msg) {
     std::lock_guard<std::mutex> lock(mtx);
@@ -181,16 +183,19 @@ void StompProtocol::handleSummary(StompMessage& msg) {
 
     if (!events.empty()) {
         const Event& lastEvent = events.back();
-        for (auto const& [key, val] : lastEvent.get_game_updates()) {
-            outFile << key << ": " << val << "\n";
+        
+        for (auto const& pair : lastEvent.get_game_updates()) {
+            outFile << pair.first << ": " << pair.second << "\n";
         }
+        
         outFile << lastEvent.get_team_a_name() << " stats:\n";
-        for (auto const& [key, val] : lastEvent.get_team_a_updates()) {
-            outFile << key << ": " << val << "\n";
+        for (auto const& pair : lastEvent.get_team_a_updates()) {
+            outFile << pair.first << ": " << pair.second << "\n";
         }
+        
         outFile << lastEvent.get_team_b_name() << " stats:\n";
-        for (auto const& [key, val] : lastEvent.get_team_b_updates()) {
-            outFile << key << ": " << val << "\n";
+        for (auto const& pair : lastEvent.get_team_b_updates()) {
+            outFile << pair.first << ": " << pair.second << "\n";
         }
     }
 
