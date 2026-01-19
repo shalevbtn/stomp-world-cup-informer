@@ -34,7 +34,7 @@ def init_database():
     try:
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
-        cursor.execute("""
+        cursor.executescript("""
             CREATE TABLE IF NOT EXISTS users (
                 VARCHAR(30) username PRIMARY KEY,
                 VARCHAR(30) password NOT NULL,
@@ -91,9 +91,11 @@ def handle_client(client_socket: socket.socket, addr):
     try:
         while True:
             message = recv_null_terminated(client_socket)
-            if message == "":
-                break
-
+            clean_msg = message.strip().upper()
+            if clean_msg.startswith("SELECT"):
+                response = execute_sql_query(message)
+            else:
+                response = execute_sql_command(message)
             print(f"[{SERVER_NAME}] Received:")
             print(message)
 
