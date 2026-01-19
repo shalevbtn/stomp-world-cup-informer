@@ -1,6 +1,6 @@
 #include "../include/StompMessage.h"
 
-StompMessage::StompMessage(std::string rawMessage){
+StompMessage::StompMessage(std::string rawMessage): command(""), headers(), body(""){
     parse(rawMessage);
 }
 
