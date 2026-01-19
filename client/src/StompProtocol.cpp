@@ -26,6 +26,9 @@ std::vector<StompMessage> StompProtocol::process(StompMessage msg) {
     else if(command == "SUMMARY") {
         handleSummary(msg);
     }
+    else if(command == "INVALID") {
+        std::cout << msg.getBody() << std::endl;
+    }
     else {
         // TODO: Handle Unknown command
     }
