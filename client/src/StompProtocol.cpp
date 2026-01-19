@@ -340,6 +340,7 @@ void StompProtocol::handleError(StompMessage& msg) {
     std::cout << "Received Error from Server:" << std::endl;
     std::cout << "Message: " << msg.getHeader("message") << std::endl;
     std::cout << "Details:\n" << msg.getBody() << std::endl;
+    std::cout << "Disconnected" << std::endl;
     isConnected = false;
 }
 

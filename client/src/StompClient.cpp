@@ -35,7 +35,7 @@ int main(int argc, char *argv[]) {
             size_t colonPos = hostPort.find(':');
             std::string host = hostPort.substr(0, colonPos);
             short port = (short)stoi(hostPort.substr(colonPos + 1));
-
+            if (connectionHandler) delete connectionHandler;
             connectionHandler = new ConnectionHandler(host, port);
             if (!connectionHandler->connect()) {
                 std::cerr << "Could not connect to server" << std::endl;
@@ -56,7 +56,10 @@ int main(int argc, char *argv[]) {
                         break;
                     }
                     if (!protocol.processServerResponse(frame)) {
-                        shouldClose = true;
+                        std::cout << "Server sent ERROR or Disconnected." << std::endl;
+                        protocol.setLoggedIn(false);
+                        connectionHandler->close();
+                        break; 
                     }
                 }
             });
