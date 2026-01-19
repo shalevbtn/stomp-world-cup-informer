@@ -32,31 +32,38 @@ def recv_null_terminated(sock: socket.socket) -> str:
 
 def init_database():
     try:
+        # Check if DB exists to avoid recreation overhead, but 'IF NOT EXISTS' handles it.
         conn = sqlite3.connect(DB_FILE)
         cursor = conn.cursor()
+        
+        # FIXED: SQL Syntax for Foreign Keys and standard SQLite types
         cursor.executescript("""
             CREATE TABLE IF NOT EXISTS users (
-                VARCHAR(30) username PRIMARY KEY,
-                VARCHAR(30) password NOT NULL,
-                DATETIME registration_date NOT NULL
+                username TEXT PRIMARY KEY,
+                password TEXT NOT NULL,
+                registration_date TEXT NOT NULL
             );
+            
             CREATE TABLE IF NOT EXISTS login_history (
-                VARCHAR(30) username FOREIGN KEY REFERENCES users(name),
-                DATETIME login_time NOT NULL,
-                DATETIME logout_time
+                username TEXT,
+                login_time TEXT NOT NULL,
+                logout_time TEXT,
+                FOREIGN KEY(username) REFERENCES users(username)
             );
+            
             CREATE TABLE IF NOT EXISTS file_tracking (
-                VARCHAR(30) username FOREIGN KEY REFERENCES users(name),
-                VARCHAR(100) filename NOT NULL,
-                DATETIME upload_time,
-                VARCHAR(30) game_channel
-            );  
+                username TEXT,
+                filename TEXT NOT NULL,
+                upload_time TEXT,
+                game_channel TEXT,
+                FOREIGN KEY(username) REFERENCES users(username)
+            );   
         """)
         conn.commit()
         conn.close()
+        print(f"[{SERVER_NAME}] Database initialized successfully.")
     except sqlite3.Error as e:
-        print(f"Error connecting to database: {e}")
-        return
+        print(f"[{SERVER_NAME}] Error initializing database: {e}")
 
 def execute_sql_command(sql_command: str) -> str:
     try:
@@ -68,7 +75,7 @@ def execute_sql_command(sql_command: str) -> str:
         return "done"
     except sqlite3.Error as e:
         print(f"Error connecting to database: {e}")
-        return None
+        return "ERROR"
 
 
 def execute_sql_query(sql_query: str) -> str:
@@ -99,7 +106,8 @@ def handle_client(client_socket: socket.socket, addr):
             print(f"[{SERVER_NAME}] Received:")
             print(message)
 
-            client_socket.sendall(b"done\0")
+            if response:
+                client_socket.sendall(response.encode('utf-8') + b"\0")
 
     except Exception as e:
         print(f"[{SERVER_NAME}] Error handling client {addr}: {e}")
@@ -140,6 +148,8 @@ def start_server(host="127.0.0.1", port=7778):
 
 
 if __name__ == "__main__":
+    init_database()
+    
     port = 7778
     if len(sys.argv) > 1:
         raw_port = sys.argv[1].strip()

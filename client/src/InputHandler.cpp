@@ -39,7 +39,7 @@ StompMessage InputHandler::parseJoin(std::stringstream& ss) {
         return StompMessage("INVALID", {}, "Invalid join arguments");
 
     std::map<std::string, std::string> headers;
-    headers["destination"] = game;
+    headers["destination"] = "/" + game;
 
     return StompMessage("SUBSCRIBE", headers, "");
 }
@@ -51,7 +51,7 @@ StompMessage InputHandler::parseExit(std::stringstream& ss) {
         return StompMessage("INVALID", {}, "Invalid exit arguments");
 
     std::map<std::string, std::string> headers;
-    headers["destination"] = game;
+    headers["destination"] = "/" + game;
 
     return StompMessage("UNSUBSCRIBE", headers, "");
 }

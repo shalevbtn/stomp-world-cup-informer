@@ -16,7 +16,7 @@ public abstract class BaseServer<T> implements Server<T> {
     private ServerSocket sock;
 
     //Refactor additions:
-    private int idCounter = 0;
+    private int idCounter = 1;
     private final ConnectionsImpl<T> cons = new ConnectionsImpl<>();
 
     

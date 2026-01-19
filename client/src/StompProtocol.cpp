@@ -2,7 +2,7 @@
 #include <fstream>
 
 StompProtocol::StompProtocol() 
-:   username(""), isConnected(false), subIdCounter(0), receiptIdCounter(0),
+:   username(""), isConnected(false), subIdCounter(1), receiptIdCounter(1),
     mtx(), gameToSubId(),receiptToCommands(),
     gameData(), frames() {}
 
@@ -40,9 +40,13 @@ std::vector<StompMessage> StompProtocol::process(StompMessage msg) {
 
 bool StompProtocol::processServerResponse(std::string message) {
     std::lock_guard<std::mutex> lock(mtx);
-    std::stringstream ss(message);
-    std::string responseType;
-    ss >> responseType;
+
+    StompMessage response(message);
+    std::string responseType = response.getCommand();
+    //FOR DEBUG
+    std::cout << "---DEBUG PRINTS---" << std::endl;
+    std::cout << "RECEIVED FRAME:" << std::endl;
+    std::cout << message << std::endl;
 
     if(responseType == "CONNECTED") {
         std::cout << "Login successful" << std::endl;
@@ -51,16 +55,16 @@ bool StompProtocol::processServerResponse(std::string message) {
     }
 
     else if(responseType == "RECEIPT") {
-        handleReceipt(ss);
+        handleReceipt(response);
         return true;
     }
 
     else if(responseType == "MESSAGE") {
-        handleMessage(ss);
+        handleMessage(response);
         return true;
     }
     else {
-        handleError(ss);
+        handleError(response);
         return false;
     }
 
@@ -76,6 +80,8 @@ void StompProtocol::handleLogin(StompMessage& msg) {
         std::cout << "The client is already logged in, log out before trying again" << std::endl;
         return;
     }
+
+    msg.addHeader("accept-version","1.2");
 
     setUsername(msg.getHeader("login"));
     frames.push_back(msg);
@@ -95,6 +101,12 @@ void StompProtocol::handleJoin(StompMessage& msg) {
     if(!checkLogin()) return;
 
     std::string gameName = msg.getHeader("destination");
+
+    if (gameToSubId.find(gameName) != gameToSubId.end()) {
+        std::cout << "You're already subscribed to that channel." << std::endl;
+        return;
+    }
+
     std::string subIdStr = msg.getHeader("id");
     std::string receiptIdStr = msg.getHeader("receipt");
 
@@ -212,22 +224,21 @@ void StompProtocol::handleSummary(StompMessage& msg) {
     std::cout << "Summary written to " << file << std::endl;
 }
 
-void StompProtocol::handleMessage(std::stringstream& ss) { // TODO: go over this function to see everything is clear.
-    std::string line;
-    std::string gameName;
+ // TODO: go over this function to see everything is clear.
+void StompProtocol::handleMessage(StompMessage& msg) {
+    // 1. Get Game Name from Header
+    std::string gameName = msg.getHeader("destination");
 
-    while (std::getline(ss, line) && !line.empty()) {
-        // We look for the "destination" header to know which game this is
-        if (line.find("destination:") == 0) {
-            gameName = line.substr(12); // Remove "destination:"
-            // Remove the leading '/' if it exists (e.g., "/germany_spain" -> "germany_spain")
-            if (!gameName.empty() && gameName[0] == '/') {
-                gameName = gameName.substr(1);
-            }
-        }
+    // Clean up game name (remove leading /)
+    if (!gameName.empty() && gameName[0] == '/') {
+        gameName = gameName.substr(1);
     }
 
     // 2. Parse Body (Reconstruct the Event)
+    // We create a stream from the BODY content only
+    std::stringstream ss(msg.getBody());
+    std::string line;
+
     std::string user;
     std::string teamA;
     std::string teamB;
@@ -240,10 +251,11 @@ void StompProtocol::handleMessage(std::stringstream& ss) { // TODO: go over this
 
     // Parser state tracking
     // 0=Header/Meta, 1=General, 2=TeamA, 3=TeamB, 4=Desc
-    int section = 0; 
+    int section = 0;
 
+    // Print the full message content as required by the assignment
+    // (This prints the body lines as we loop through them)
     while (std::getline(ss, line)) {
-        // The assignment usually requires printing received messages to screen
         std::cout << line << std::endl; 
 
         if (line.empty()) continue;
@@ -268,14 +280,18 @@ void StompProtocol::handleMessage(std::stringstream& ss) { // TODO: go over this
                 else if (key == "team a") teamA = val;
                 else if (key == "team b") teamB = val;
                 else if (key == "event name") eventName = val;
-                else if (key == "time") time = std::stoi(val);
+                else if (key == "time") {
+                    try {
+                        time = std::stoi(val);
+                    } catch (...) { time = 0; }
+                }
             }
         } 
         else if (section >= 1 && section <= 3) {
             // Parsing Updates (Key: Value)
             size_t split = line.find(':');
             if (split != std::string::npos) {
-                // Remove leading tab if present (standard formatting from your getReportBody)
+                // Remove leading tab if present
                 size_t keyStart = 0;
                 while (keyStart < line.length() && (line[keyStart] == '\t' || line[keyStart] == ' ')) keyStart++;
                 
@@ -289,36 +305,42 @@ void StompProtocol::handleMessage(std::stringstream& ss) { // TODO: go over this
             }
         }
         else if (section == 4) {
-            // Parsing Description (Append remaining lines)
+            // Parsing Description
             description += line + "\n";
         }
     }
 
     // 3. Update the Game Data structure
-    // We only save if we successfully parsed the user and game name
     if (!gameName.empty() && !user.empty()) {
         Event event(teamA, teamB, eventName, time, gameUpdates, teamAUpdates, teamBUpdates, description);
-        
-        // This is safe because 'processServerResponse' holds the lock (from previous step)
         gameData[gameName][user].push_back(event);
     }
 }
 
-void StompProtocol::handleReceipt(std::stringstream& ss) {
-    std::string receiptID;
-    ss >> receiptID;
-    std::cout << receiptToCommands[std::stoi(receiptID)] << std::endl;
+void StompProtocol::handleReceipt(StompMessage& msg) {
+    std::string receiptIdStr = msg.getHeader("receipt-id");
+    
+    if (receiptIdStr.empty()) return;
+
+    try {
+        int receiptId = std::stoi(receiptIdStr);
+        if (receiptToCommands.count(receiptId)) {
+            std::cout << receiptToCommands[receiptId] << std::endl;
+            receiptToCommands.erase(receiptId);
+        } else {
+            std::cout << "Receipt " << receiptId << " received." << std::endl;
+        }
+    } catch (...) {
+        std::cerr << "Error parsing receipt ID" << std::endl;
+    }
 }
 
-void StompProtocol::handleError(std::stringstream& ss) { // TODO: go over this function to see everything is clear
-    std::string line;
-    std::string errMsg;
-    // Parse the rest of the body (after the "ERROR" command)
-    while (std::getline(ss, line)) {
-        std::cout << line << std::endl; // Print the error details to the screen
-    }
-    // Setup for graceful shutdown
-    isConnected = false; 
+// TODO: go over this function to see everything is clear
+void StompProtocol::handleError(StompMessage& msg) {
+    std::cout << "Received Error from Server:" << std::endl;
+    std::cout << "Message: " << msg.getHeader("message") << std::endl;
+    std::cout << "Details:\n" << msg.getBody() << std::endl;
+    isConnected = false;
 }
 
 bool StompProtocol::checkLogin(){

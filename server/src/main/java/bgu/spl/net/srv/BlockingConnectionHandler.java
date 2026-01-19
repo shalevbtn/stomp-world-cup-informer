@@ -34,6 +34,9 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
             while (!protocol.shouldTerminate() && connected && (read = in.read()) >= 0) {
                 T nextMessage = encdec.decodeNextByte((byte) read);
                 if (nextMessage != null) {
+                    //FOR DEBUG:
+                    System.out.println("--- DEBUG PRINT ---\nRECEIVED FRAME:\n" + nextMessage.toString());
+                    
                     protocol.process(nextMessage);
                 }
             }
@@ -53,6 +56,9 @@ public class BlockingConnectionHandler<T> implements Runnable, ConnectionHandler
     public synchronized void send(T msg) {
         if (msg != null) {
             try {
+                //FOR DEBUG:
+                System.out.println("--- DEBUG PRINT ---\nSENDING FRAME:\n" + msg.toString());
+
                 out.write(encdec.encode(msg));
                 out.flush();
             } catch (IOException ex) {

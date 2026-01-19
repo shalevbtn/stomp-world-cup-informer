@@ -26,9 +26,9 @@ private:
     void handleExit(StompMessage& msg);
     void handleSummary(StompMessage& msg);
 
-    void handleMessage(std::stringstream& ss);
-    void handleReceipt(std::stringstream& ss);
-    void handleError(std::stringstream& ss);
+    void handleMessage(StompMessage& response);
+    void handleReceipt(StompMessage& response);
+    void handleError(StompMessage& response);
 
     bool checkLogin();
     std::string getReportBody(Event event);

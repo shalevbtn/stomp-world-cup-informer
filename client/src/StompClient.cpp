@@ -64,6 +64,11 @@ int main(int argc, char *argv[]) {
         
         if (connectionHandler && protocol.isLoggedIn()) {
             for (const auto& frame : framesToSend) {
+                //FOR DEBUG
+                std::cout << "---DEBUG PRINTS---" << std::endl;
+                std::cout << "SENDING FRAME:" << std::endl;
+                std::cout << frame.toString() << std::endl;
+
                 connectionHandler->sendFrameAscii(frame.toString(), '\0');
             }
         }
