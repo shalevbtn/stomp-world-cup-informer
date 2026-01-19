@@ -25,7 +25,7 @@ StompMessage InputHandler::parseLogin(std::stringstream& ss) {
         return StompMessage("INVALID", {}, "Invalid login arguments");
 
     std::map<std::string, std::string> headers;
-    headers["host"] = hostPort;
+    headers["host"] = stomp.cs.bgu.ac.il;
     headers["login"] = username;
     headers["passcode"] = pass;
 

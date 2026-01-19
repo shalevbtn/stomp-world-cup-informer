@@ -70,7 +70,7 @@ public class StompProtocolImpl implements StompMessagingProtocol<StompMessage> {
         String version = msg.getHeader("accept-version");
         String host = msg.getHeader("host"); 
 
-        if (login == null || passcode == null || version == null || host == null) {
+        if (login == null || passcode == null || version == null || version != "1.2" || host == null) {
             handleMalFrame("Missing required headers: ", null ,"login, passcode, accept-version, or host");
             return;
         }
