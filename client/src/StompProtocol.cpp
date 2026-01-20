@@ -125,7 +125,17 @@ void StompProtocol::handleJoin(StompMessage& msg) {
 void StompProtocol::handleReport(StompMessage& msg) {
     if(!checkLogin()) return;
     std::string filePath = msg.getHeader("file_path");
-    names_and_events nne = parseEventsFile(filePath); // TODO: check how to parse the json. I dont know what is this
+
+    names_and_events nne;
+    try {
+        nne = parseEventsFile(filePath); 
+    } catch (const std::exception& e) {
+        std::cerr << "Error: Failed to parse file '" << filePath << "'." << std::endl;
+        std::cerr << "Details: " << e.what() << std::endl;
+        std::cerr << "Check that the file exists and the path is correct." << std::endl;
+        return; 
+    }
+
     std::string team_a_name = nne.team_a_name;
     std::string team_b_name = nne.team_b_name;
     std::string game_name = team_a_name + "_" + team_b_name;

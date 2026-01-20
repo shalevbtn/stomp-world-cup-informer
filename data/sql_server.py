@@ -65,6 +65,7 @@ def init_database():
     except sqlite3.Error as e:
         print(f"[{SERVER_NAME}] Error initializing database: {e}")
 
+
 def execute_sql_command(sql_command: str) -> str:
     try:
         conn = sqlite3.connect(DB_FILE)
@@ -85,11 +86,16 @@ def execute_sql_query(sql_query: str) -> str:
         cursor.execute(sql_query)
         results = cursor.fetchall()
         conn.close()
-        result_str = "\n".join([str(row) for row in results])
-        return result_str if result_str else "no results"
+
+        if not results:
+            return "SUCCESS"
+        
+        rows_str = "|".join([str(row) for row in results])
+        return "SUCCESS|" + rows_str
+        
     except sqlite3.Error as e:
-        print(f"Error connecting to database: {e}")
-        return None
+        print(f"[{SERVER_NAME}] SQL Query Error: {e}")
+        return "ERROR"
 
 
 def handle_client(client_socket: socket.socket, addr):
@@ -98,11 +104,15 @@ def handle_client(client_socket: socket.socket, addr):
     try:
         while True:
             message = recv_null_terminated(client_socket)
+            if not message: 
+                break
+            
             clean_msg = message.strip().upper()
             if clean_msg.startswith("SELECT"):
                 response = execute_sql_query(message)
             else:
                 response = execute_sql_command(message)
+
             print(f"[{SERVER_NAME}] Received:")
             print(message)
 
