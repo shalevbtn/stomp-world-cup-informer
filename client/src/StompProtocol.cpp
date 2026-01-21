@@ -32,7 +32,7 @@ std::vector<StompMessage> StompProtocol::process(StompMessage msg) {
         std::cout << msg.getBody() << std::endl;
     }
     else {
-        // TODO: Handle Unknown command
+        std::cout << "Unknown command" << std::endl;
     }
 
     return frames;
@@ -50,7 +50,6 @@ bool StompProtocol::processServerResponse(std::string message) {
 
     if(responseType == "CONNECTED") {
         std::cout << "Login successful" << std::endl;
-        //TODO: Log to the DB probably
         return true;
     }
 
@@ -114,7 +113,7 @@ void StompProtocol::handleJoin(StompMessage& msg) {
     int receiptId = receiptIdCounter++;
     
     gameToSubId[gameName] = subId;
-    receiptToCommands[receiptId] = "Joined channel " + gameName; //TODO: Remember to print this on receipt
+    receiptToCommands[receiptId] = "Joined channel " + gameName;
 
     msg.addHeader("id", std::to_string(subId));
     msg.addHeader("receipt", std::to_string(receiptId));
@@ -234,18 +233,14 @@ void StompProtocol::handleSummary(StompMessage& msg) {
     std::cout << "Summary written to " << file << std::endl;
 }
 
- // TODO: go over this function to see everything is clear.
 void StompProtocol::handleMessage(StompMessage& msg) {
-    // 1. Get Game Name from Header
+
     std::string gameName = msg.getHeader("destination");
 
-    // Clean up game name (remove leading /)
     if (!gameName.empty() && gameName[0] == '/') {
         gameName = gameName.substr(1);
     }
 
-    // 2. Parse Body (Reconstruct the Event)
-    // We create a stream from the BODY content only
     std::stringstream ss(msg.getBody());
     std::string line;
 
@@ -259,31 +254,23 @@ void StompProtocol::handleMessage(StompMessage& msg) {
     std::map<std::string, std::string> teamAUpdates;
     std::map<std::string, std::string> teamBUpdates;
 
-    // Parser state tracking
-    // 0=Header/Meta, 1=General, 2=TeamA, 3=TeamB, 4=Desc
     int section = 0;
 
-    // Print the full message content as required by the assignment
-    // (This prints the body lines as we loop through them)
     while (std::getline(ss, line)) {
         std::cout << line << std::endl; 
 
         if (line.empty()) continue;
 
-        // Check for section headers
         if (line == "general game updates:") { section = 1; continue; }
         if (line == "team a updates:")     { section = 2; continue; }
         if (line == "team b updates:")     { section = 3; continue; }
         if (line == "description:")        { section = 4; continue; }
 
-        // Parse content based on section
         if (section == 0) {
-            // Parsing Metadata (User, Teams, Time, Event Name)
             size_t split = line.find(':');
             if (split != std::string::npos) {
                 std::string key = line.substr(0, split);
                 std::string val = line.substr(split + 1);
-                // Trim leading space from value if exists
                 if (!val.empty() && val[0] == ' ') val = val.substr(1);
 
                 if (key == "user") user = val;
@@ -298,10 +285,8 @@ void StompProtocol::handleMessage(StompMessage& msg) {
             }
         } 
         else if (section >= 1 && section <= 3) {
-            // Parsing Updates (Key: Value)
             size_t split = line.find(':');
             if (split != std::string::npos) {
-                // Remove leading tab if present
                 size_t keyStart = 0;
                 while (keyStart < line.length() && (line[keyStart] == '\t' || line[keyStart] == ' ')) keyStart++;
                 
@@ -315,12 +300,10 @@ void StompProtocol::handleMessage(StompMessage& msg) {
             }
         }
         else if (section == 4) {
-            // Parsing Description
             description += line + "\n";
         }
     }
 
-    // 3. Update the Game Data structure
     if (!gameName.empty() && !user.empty()) {
         Event event(teamA, teamB, eventName, time, gameUpdates, teamAUpdates, teamBUpdates, description);
         gameData[gameName][user].push_back(event);
@@ -345,7 +328,6 @@ void StompProtocol::handleReceipt(StompMessage& msg) {
     }
 }
 
-// TODO: go over this function to see everything is clear
 void StompProtocol::handleError(StompMessage& msg) {
     std::cout << "Received Error from Server:" << std::endl;
     std::cout << "Message: " << msg.getHeader("message") << std::endl;

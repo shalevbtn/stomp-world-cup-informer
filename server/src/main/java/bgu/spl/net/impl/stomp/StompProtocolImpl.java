@@ -140,7 +140,7 @@ public class StompProtocolImpl implements StompMessagingProtocol<StompMessage> {
         String channel = msg.getHeader("destination");
         String receipt = msg.getHeader("receipt");
 
-        if(channel == null || msg.body == null) {  //TODO: verify that msg.body != "" is a requirement
+        if(channel == null || msg.body == null) {  
             handleMalFrame("Missing required headers: ",receipt, "destination");
             return;
         }

@@ -13,12 +13,10 @@ StompMessage InputHandler::processUserInput(const std::string& input) {
     if (command == "logout") return parseLogout(ss);
     if (command == "summary") return parseSummary(ss);
 
-    // Unknown command
     return StompMessage("INVALID", {}, "Unknown command");
 }
 
 
-// login {host:port} {username} {password}
 StompMessage InputHandler::parseLogin(std::stringstream& ss) {
     std::string hostPort, username, pass;
     if (!(ss >> hostPort >> username >> pass))
@@ -65,7 +63,6 @@ StompMessage InputHandler::parseReport(std::stringstream& ss) {
     std::map<std::string, std::string> headers;
     headers["file_path"] = file;
 
-    // Protocol will translate this to multiple SEND frames
     return StompMessage("SEND", headers, "");
 }
 
