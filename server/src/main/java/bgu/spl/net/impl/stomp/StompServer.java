@@ -1,5 +1,6 @@
 package bgu.spl.net.impl.stomp;
 
+import bgu.spl.net.impl.data.Database;
 import bgu.spl.net.srv.Server;
 
 public class StompServer {
@@ -9,6 +10,11 @@ public class StompServer {
             System.out.println("Usage: port server_type(tpc/reactor)");
             return;
         }
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            System.out.println("Server stopping... generating report.");
+            Database.getInstance().printReport(); 
+        }));
 
         int port = Integer.parseInt(args[0]);
         String serverType = args[1];

@@ -4,7 +4,7 @@
 StompProtocol::StompProtocol() 
 :   username(""), isConnected(false), subIdCounter(1), receiptIdCounter(1),
     mtx(), gameToSubId(),receiptToCommands(),
-    gameData(), frames() {}
+    gameData(), frames(), disconnectReceiptId(-1) {}
 
 std::vector<StompMessage> StompProtocol::process(StompMessage msg) {
     std::lock_guard<std::mutex> lock(mtx);
@@ -90,6 +90,8 @@ void StompProtocol::handleLogout(StompMessage& msg) {
     if(!checkLogin()) return;
 
     int receiptId = receiptIdCounter++;
+    disconnectReceiptId = receiptId;
+
     receiptToCommands[receiptId] = "Disconnected from the server.";
     msg.addHeader("receipt", std::to_string(receiptId));
 
@@ -141,17 +143,36 @@ void StompProtocol::handleReport(StompMessage& msg) {
 
     std::vector<Event> sortedEvents = nne.events;
     std::sort(sortedEvents.begin(), sortedEvents.end(), [](const Event& a, const Event& b) {
+        bool a_before_half = true;
+        bool b_before_half = true;
+
+        if (a.get_game_updates().count("before halftime")) {
+             a_before_half = (a.get_game_updates().at("before halftime") == "true");
+        }
+        if (b.get_game_updates().count("before halftime")) {
+             b_before_half = (b.get_game_updates().at("before halftime") == "true");
+        }
+
+        if (a_before_half != b_before_half) {
+            return a_before_half > b_before_half;
+        }
         return a.get_time() < b.get_time();
     });
 
     msg.removeHeader("file_path");
-    msg.addHeader("user-file", filePath);
     msg.addHeader("destination", "/" + game_name);
+
+    bool firstSEND = true;
     
     for(Event event : sortedEvents){
         gameData[game_name][username].push_back(event);
-
         StompMessage eventMessage = msg;
+
+        if(firstSEND) {
+            eventMessage.addHeader("user-file", filePath);
+            firstSEND = false;
+        }
+        
         eventMessage.setBody(getReportBody(event));       
         frames.push_back(eventMessage);
     }
@@ -317,7 +338,12 @@ void StompProtocol::handleReceipt(StompMessage& msg) {
 
     try {
         int receiptId = std::stoi(receiptIdStr);
-        if (receiptToCommands.count(receiptId)) {
+         if (receiptId == disconnectReceiptId) {
+            shouldTerminateClient = true;
+            isConnected = false;
+            std::cout << "Disconnected from server" << std::endl; 
+        }
+        else if (receiptToCommands.count(receiptId)) {
             std::cout << receiptToCommands[receiptId] << std::endl;
             receiptToCommands.erase(receiptId);
         } else {
@@ -371,4 +397,3 @@ std::string StompProtocol::getReportBody(Event event) {
 
     return body;
 }
-

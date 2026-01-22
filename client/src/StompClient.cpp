@@ -55,11 +55,12 @@ int main(int argc, char *argv[]) {
                         protocol.setLoggedIn(false);
                         break;
                     }
-                    if (!protocol.processServerResponse(frame)) {
-                        std::cout << "Server sent ERROR or Disconnected." << std::endl;
+                    protocol.processServerResponse(frame);
+                    if (protocol.shouldTerminate()) {
                         protocol.setLoggedIn(false);
+                        shouldClose = true;
                         connectionHandler->close();
-                        break; 
+                        break;
                     }
                 }
             });

@@ -12,6 +12,8 @@ private:
     int subIdCounter;
     int receiptIdCounter;
     std::mutex mtx;
+    int disconnectReceiptId;
+    bool shouldTerminateClient = false;
 
     std::map<std::string, int> gameToSubId;
     std::map<int, std::string> receiptToCommands; // receipts to commands we asked from the server
@@ -41,4 +43,5 @@ public:
     void setLoggedIn(bool status) { isConnected = status; }
     void setUsername(std::string name) { username = name; }
     void clearFrames();
+    bool shouldTerminate() { return shouldTerminateClient; }
 };
