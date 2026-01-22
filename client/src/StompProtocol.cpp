@@ -59,6 +59,7 @@ bool StompProtocol::processServerResponse(std::string message) {
 
     if(responseType == "CONNECTED") {
         std::cout << "Login successful" << std::endl;
+        isConnected = true;
         return true;
     }
 
@@ -198,6 +199,7 @@ void StompProtocol::handleExit(StompMessage& msg) {
     int receiptId = receiptIdCounter++;
     
     receiptToCommands[receiptId] = "Exited channel " + gameName;
+    msg.removeHeader("destination");
     msg.addHeader("id", std::to_string(subId));
     msg.addHeader("receipt", std::to_string(receiptId));
 
