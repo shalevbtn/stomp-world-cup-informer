@@ -2,9 +2,18 @@
 #include <fstream>
 
 StompProtocol::StompProtocol() 
-:   username(""), isConnected(false), subIdCounter(1), receiptIdCounter(1),
-    mtx(), gameToSubId(),receiptToCommands(),
-    gameData(), frames(), disconnectReceiptId(-1) {}
+:   username(""), 
+    isConnected(false),
+    subIdCounter(1),
+    receiptIdCounter(1),
+    mtx(),
+    disconnectReceiptId(-1),      
+    shouldTerminateClient(false),
+    gameToSubId(),
+    receiptToCommands(),
+    gameData(), 
+    frames()
+{}
 
 std::vector<StompMessage> StompProtocol::process(StompMessage msg) {
     std::lock_guard<std::mutex> lock(mtx);
@@ -80,8 +89,6 @@ void StompProtocol::handleLogin(StompMessage& msg) {
         return;
     }
 
-    msg.addHeader("accept-version","1.2");
-
     setUsername(msg.getHeader("login"));
     frames.push_back(msg);
 }
@@ -127,54 +134,53 @@ void StompProtocol::handleReport(StompMessage& msg) {
     if(!checkLogin()) return;
     std::string filePath = msg.getHeader("file_path");
 
-    names_and_events nne;
     try {
-        nne = parseEventsFile(filePath); 
+        names_and_events nne = parseEventsFile(filePath); 
+    
+        std::string team_a_name = nne.team_a_name;
+        std::string team_b_name = nne.team_b_name;
+        std::string game_name = team_a_name + "_" + team_b_name;
+
+        std::vector<Event> sortedEvents = nne.events;
+        std::sort(sortedEvents.begin(), sortedEvents.end(), [](const Event& a, const Event& b) {
+            bool a_before_half = true;
+            bool b_before_half = true;
+
+            if (a.get_game_updates().count("before halftime")) {
+                a_before_half = (a.get_game_updates().at("before halftime") == "true");
+            }
+            if (b.get_game_updates().count("before halftime")) {
+                b_before_half = (b.get_game_updates().at("before halftime") == "true");
+            }
+
+            if (a_before_half != b_before_half) {
+                return a_before_half > b_before_half;
+            }
+            return a.get_time() < b.get_time();
+        });
+
+        msg.removeHeader("file_path");
+        msg.addHeader("destination", "/" + game_name);
+
+        bool firstSEND = true;
+        
+        for(Event event : sortedEvents){
+            gameData[game_name][username].push_back(event);
+            StompMessage eventMessage = msg;
+
+            if(firstSEND) {
+                eventMessage.addHeader("user-file", filePath);
+                firstSEND = false;
+            }
+            
+            eventMessage.setBody(getReportBody(event));       
+            frames.push_back(eventMessage);
+        }
     } catch (const std::exception& e) {
         std::cerr << "Error: Failed to parse file '" << filePath << "'." << std::endl;
         std::cerr << "Details: " << e.what() << std::endl;
         std::cerr << "Check that the file exists and the path is correct." << std::endl;
         return; 
-    }
-
-    std::string team_a_name = nne.team_a_name;
-    std::string team_b_name = nne.team_b_name;
-    std::string game_name = team_a_name + "_" + team_b_name;
-
-    std::vector<Event> sortedEvents = nne.events;
-    std::sort(sortedEvents.begin(), sortedEvents.end(), [](const Event& a, const Event& b) {
-        bool a_before_half = true;
-        bool b_before_half = true;
-
-        if (a.get_game_updates().count("before halftime")) {
-             a_before_half = (a.get_game_updates().at("before halftime") == "true");
-        }
-        if (b.get_game_updates().count("before halftime")) {
-             b_before_half = (b.get_game_updates().at("before halftime") == "true");
-        }
-
-        if (a_before_half != b_before_half) {
-            return a_before_half > b_before_half;
-        }
-        return a.get_time() < b.get_time();
-    });
-
-    msg.removeHeader("file_path");
-    msg.addHeader("destination", "/" + game_name);
-
-    bool firstSEND = true;
-    
-    for(Event event : sortedEvents){
-        gameData[game_name][username].push_back(event);
-        StompMessage eventMessage = msg;
-
-        if(firstSEND) {
-            eventMessage.addHeader("user-file", filePath);
-            firstSEND = false;
-        }
-        
-        eventMessage.setBody(getReportBody(event));       
-        frames.push_back(eventMessage);
     }
 }
 
@@ -226,22 +232,38 @@ void StompProtocol::handleSummary(StompMessage& msg) {
     outFile << "Game stats:\n";
     outFile << "General stats:\n";
 
+    std::map<std::string, std::string> general_stats;
+    std::map<std::string, std::string> team_a_stats;
+    std::map<std::string, std::string> team_b_stats;
+
+    for (const auto& event : events) {
+        for (const auto& pair : event.get_game_updates()) {
+            general_stats[pair.first] = pair.second;
+        }
+        for (const auto& pair : event.get_team_a_updates()) {
+            team_a_stats[pair.first] = pair.second;
+        }
+        for (const auto& pair : event.get_team_b_updates()) {
+            team_b_stats[pair.first] = pair.second;
+        }
+    }
+
+    for (const auto& pair : general_stats) {
+        outFile << pair.first << ": " << pair.second << "\n";
+    }
+    
     if (!events.empty()) {
-        const Event& lastEvent = events.back();
-        
-        for (auto const& pair : lastEvent.get_game_updates()) {
-            outFile << pair.first << ": " << pair.second << "\n";
-        }
-        
-        outFile << lastEvent.get_team_a_name() << " stats:\n";
-        for (auto const& pair : lastEvent.get_team_a_updates()) {
-            outFile << pair.first << ": " << pair.second << "\n";
-        }
-        
-        outFile << lastEvent.get_team_b_name() << " stats:\n";
-        for (auto const& pair : lastEvent.get_team_b_updates()) {
-            outFile << pair.first << ": " << pair.second << "\n";
-        }
+        outFile << events[0].get_team_a_name() << " stats:\n";
+    }
+    for (const auto& pair : team_a_stats) {
+        outFile << pair.first << ": " << pair.second << "\n";
+    }
+    
+    if (!events.empty()) {
+        outFile << events[0].get_team_b_name() << " stats:\n";
+    }
+    for (const auto& pair : team_b_stats) {
+        outFile << pair.first << ": " << pair.second << "\n";
     }
 
     outFile << "Game event reports:\n";

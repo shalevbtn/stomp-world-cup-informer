@@ -13,7 +13,7 @@ private:
     int receiptIdCounter;
     std::mutex mtx;
     int disconnectReceiptId;
-    bool shouldTerminateClient = false;
+    bool shouldTerminateClient;
 
     std::map<std::string, int> gameToSubId;
     std::map<int, std::string> receiptToCommands; // receipts to commands we asked from the server
